@@ -11,14 +11,14 @@ Format: [Michael Nygard's ADR template](https://github.com/joelparkerhenderson/a
 |------|----------------------------------------------------|----------|
 | 0001 | [Modular monolith over microservices](0001-modular-monolith.md) | Accepted |
 | 0002 | [Money representation: integer minor units](0002-money-representation.md) | Accepted |
+| 0003 | [Spring MVC + virtual threads over WebFlux](0003-mvc-virtual-threads.md) | Accepted |
+| 0004 | [Pessimistic locking + deterministic lock ordering](0004-pessimistic-locking.md) | Accepted |
+| 0005 | [Idempotency for money-moving operations](0005-idempotency-strategy.md) | Accepted |
+| 0006 | [Keycloak (OIDC) over hand-rolled auth](0006-keycloak-auth.md) | Accepted |
 
 ## Planned
 
 These decisions are made as their phase arrives (see the implementation plan):
 
-- 0003 — Spring MVC + virtual threads over WebFlux
-- 0004 — Pessimistic locking + deterministic lock ordering
-- 0005 — Idempotency strategy
-- 0006 — Keycloak over hand-rolled auth
 - 0007 — Fraud engine as a separate Python service
 - 0008 — RabbitMQ over Kafka

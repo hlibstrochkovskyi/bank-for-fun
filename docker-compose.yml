@@ -17,6 +17,24 @@ services:
       timeout: 5s
       retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "${KEYCLOAK_PORT:-8088}:8080"
+    volumes:
+      - ./infra/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
   core-bank:
     build:
       context: ./core-bank
@@ -24,11 +42,14 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-ledgerbank}
       DB_USERNAME: ${DB_USERNAME:-ledgerbank}
       DB_PASSWORD: ${DB_PASSWORD:-ledgerbank}
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ledger-bank/protocol/openid-connect/certs
     ports:
       - "${APP_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
       interval: 10s
