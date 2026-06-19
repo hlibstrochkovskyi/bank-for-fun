@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: core-bank
+
+  # Twelve-factor: all config comes from the environment, with sane local defaults.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ledgerbank}
+    username: ${DB_USERNAME:ledgerbank}
+    password: ${DB_PASSWORD:ledgerbank}
+
+  jpa:
+    # Flyway owns DDL. Hibernate only validates that entities match the migrated schema.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # Project Loom: blocking + virtual threads scales the simple servlet stack.
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+info:
+  app:
+    name: "ledger-bank :: core-bank"
+    description: Simulated retail bank on an immutable double-entry ledger
