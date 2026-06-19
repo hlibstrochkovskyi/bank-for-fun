@@ -74,6 +74,13 @@ public class PaymentsService {
 		});
 	}
 
+	public PaymentResult reverse(ReverseCommand command) {
+		String hash = requestHash("REVERSAL", command.postingId().toString());
+		return idempotency.execute(command.idempotencyKey(), hash, () ->
+				new PaymentResult(ledger.reverse(command.postingId(), command.idempotencyKey(),
+						command.reason()).id()));
+	}
+
 	private static void requirePositive(Money amount) {
 		if (!amount.isPositive()) {
 			throw new IllegalArgumentException("amount must be positive");

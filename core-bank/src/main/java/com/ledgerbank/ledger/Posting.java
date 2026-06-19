@@ -31,6 +31,9 @@ public class Posting {
 
 	private String description;
 
+	@Column(name = "reverses_posting_id")
+	private UUID reversesPostingId;
+
 	@CreationTimestamp
 	@Column(name = "created_at")
 	private OffsetDateTime createdAt;
@@ -40,9 +43,14 @@ public class Posting {
 	}
 
 	public Posting(PostingType type, String idempotencyKey, String description) {
+		this(type, idempotencyKey, description, null);
+	}
+
+	public Posting(PostingType type, String idempotencyKey, String description, UUID reversesPostingId) {
 		this.type = type;
 		this.idempotencyKey = idempotencyKey;
 		this.description = description;
+		this.reversesPostingId = reversesPostingId;
 	}
 
 	public UUID id() {
@@ -59,6 +67,10 @@ public class Posting {
 
 	public String description() {
 		return description;
+	}
+
+	public UUID reversesPostingId() {
+		return reversesPostingId;
 	}
 
 	public OffsetDateTime createdAt() {

@@ -2,6 +2,8 @@ package com.ledgerbank.web;
 
 import com.ledgerbank.ledger.CurrencyMismatchException;
 import com.ledgerbank.ledger.InsufficientFundsException;
+import com.ledgerbank.ledger.PostingNotFoundException;
+import com.ledgerbank.ledger.ReversalNotAllowedException;
 import com.ledgerbank.ledger.UnbalancedPostingException;
 import com.ledgerbank.payments.IdempotencyConflictException;
 import com.ledgerbank.shared.AccountNotFoundException;
@@ -22,6 +24,16 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(AccountNotFoundException.class)
 	ProblemDetail handleNotFound(AccountNotFoundException ex) {
 		return problem(HttpStatus.NOT_FOUND, "Account not found", ex.getMessage());
+	}
+
+	@ExceptionHandler(PostingNotFoundException.class)
+	ProblemDetail handlePostingNotFound(PostingNotFoundException ex) {
+		return problem(HttpStatus.NOT_FOUND, "Posting not found", ex.getMessage());
+	}
+
+	@ExceptionHandler(ReversalNotAllowedException.class)
+	ProblemDetail handleReversalNotAllowed(ReversalNotAllowedException ex) {
+		return problem(HttpStatus.CONFLICT, "Reversal not allowed", ex.getMessage());
 	}
 
 	@ExceptionHandler(InsufficientFundsException.class)

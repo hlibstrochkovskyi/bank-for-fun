@@ -15,4 +15,7 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
 
 	/** Most-recent-first entries for an account (transaction history). */
 	List<LedgerEntry> findByAccountIdOrderByIdDesc(UUID accountId, Limit limit);
+
+	/** All entries belonging to a posting (used to build its inverse for reversal). */
+	List<LedgerEntry> findByPostingId(UUID postingId);
 }

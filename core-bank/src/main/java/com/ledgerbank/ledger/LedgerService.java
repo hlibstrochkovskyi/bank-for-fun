@@ -53,7 +53,40 @@ public class LedgerService {
 	 */
 	@Transactional
 	public Posting record(RecordPostingCommand command) {
-		List<LedgerLeg> legs = command.legs();
+		return write(command.type(), command.idempotencyKey(), command.description(),
+				command.legs(), null, true);
+	}
+
+	/**
+	 * Reverse a posting by recording its exact inverse as a new {@code REVERSAL}
+	 * posting (the original is never edited or deleted). A posting may be reversed at
+	 * most once, and a reversal cannot itself be reversed. Reversals are corrections,
+	 * so they bypass overdraft floors (the inverse may push an account negative).
+	 *
+	 * @throws PostingNotFoundException    if the original posting does not exist
+	 * @throws ReversalNotAllowedException if it is already reversed or is a reversal
+	 */
+	@Transactional
+	public Posting reverse(UUID originalPostingId, String idempotencyKey, String reason) {
+		Posting original = postings.findById(originalPostingId)
+				.orElseThrow(() -> new PostingNotFoundException(originalPostingId));
+		if (original.type() == PostingType.REVERSAL) {
+			throw new ReversalNotAllowedException(originalPostingId, "a reversal cannot be reversed");
+		}
+		if (postings.existsByReversesPostingId(originalPostingId)) {
+			throw new ReversalNotAllowedException(originalPostingId, "already reversed");
+		}
+		List<LedgerLeg> inverseLegs = entries.findByPostingId(originalPostingId).stream()
+				.map(entry -> new LedgerLeg(entry.accountId(),
+						Money.of(Math.negateExact(entry.amount()), Currency.getInstance(entry.currency()))))
+				.toList();
+		return write(PostingType.REVERSAL, idempotencyKey,
+				reason != null ? reason : "reversal of " + originalPostingId,
+				inverseLegs, originalPostingId, false);
+	}
+
+	private Posting write(PostingType type, String idempotencyKey, String description,
+			List<LedgerLeg> legs, UUID reversesPostingId, boolean enforceFloors) {
 		validateBalanced(legs);
 
 		// Lock the affected balances in a deterministic order to prevent deadlocks.
@@ -76,17 +109,18 @@ public class LedgerService {
 		}
 
 		// Enforce overdraft floors under the lock, before writing anything.
-		for (Map.Entry<UUID, Long> delta : deltas.entrySet()) {
-			AccountBalance balance = locked.get(delta.getKey());
-			long projected = Math.addExact(balance.balance(), delta.getValue());
-			if (balance.minBalance() != null && projected < balance.minBalance()) {
-				throw new InsufficientFundsException(delta.getKey(), projected, balance.minBalance());
+		if (enforceFloors) {
+			for (Map.Entry<UUID, Long> delta : deltas.entrySet()) {
+				AccountBalance balance = locked.get(delta.getKey());
+				long projected = Math.addExact(balance.balance(), delta.getValue());
+				if (balance.minBalance() != null && projected < balance.minBalance()) {
+					throw new InsufficientFundsException(delta.getKey(), projected, balance.minBalance());
+				}
 			}
 		}
 
 		// Persist the immutable posting + entries, then move the snapshots.
-		Posting posting = postings.save(new Posting(command.type(), command.idempotencyKey(),
-				command.description()));
+		Posting posting = postings.save(new Posting(type, idempotencyKey, description, reversesPostingId));
 		for (LedgerLeg leg : legs) {
 			entries.save(new LedgerEntry(posting.id(), leg.accountId(), leg.amount().minorUnits(),
 					leg.amount().currency().getCurrencyCode()));

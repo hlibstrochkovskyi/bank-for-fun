@@ -5,6 +5,11 @@
   "registrationAllowed": true,
   "loginWithEmailAllowed": true,
   "accessTokenLifespan": 900,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "ledger-bank administrator (may reverse postings)" }
+    ]
+  },
   "clients": [
     {
       "clientId": "ledger-bank-web",
@@ -39,6 +44,7 @@
       "email": "bob@example.com",
       "firstName": "Bob",
       "lastName": "Example",
+      "realmRoles": ["admin"],
       "credentials": [
         { "type": "password", "value": "password", "temporary": false }
       ]
