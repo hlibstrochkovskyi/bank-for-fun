@@ -3,8 +3,10 @@ package com.ledgerbank.accounts;
 import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.shared.AccountNotFoundException;
 import java.util.Currency;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,5 +53,25 @@ public class AccountService {
 	public Account require(UUID accountId) {
 		return accounts.findById(accountId)
 				.orElseThrow(() -> new AccountNotFoundException(accountId));
+	}
+
+	@Transactional(readOnly = true)
+	public List<Account> listOwnedBy(UUID ownerId) {
+		return accounts.findByOwnerId(ownerId);
+	}
+
+	/**
+	 * Load an account, asserting the given user owns it. Server-side resource
+	 * authorization — a user may only touch their own accounts.
+	 *
+	 * @throws AccessDeniedException if the account is not owned by {@code ownerId}
+	 */
+	@Transactional(readOnly = true)
+	public Account requireOwnedBy(UUID accountId, UUID ownerId) {
+		Account account = require(accountId);
+		if (!ownerId.equals(account.ownerId())) {
+			throw new AccessDeniedException("account %s is not owned by the current user".formatted(accountId));
+		}
+		return account;
 	}
 }

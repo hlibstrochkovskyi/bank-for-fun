@@ -25,6 +25,20 @@ spring:
     virtual:
       enabled: true
 
+  # OAuth2 resource server: validate JWTs issued by Keycloak (ADR-0006). jwk-set-uri
+  # is fetched lazily on first token validation, so startup does not depend on
+  # Keycloak being up. Tests use mock JWTs and never hit this.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8088/realms/ledger-bank/protocol/openid-connect/certs}
+
+  # RFC 7807 application/problem+json error responses.
+  mvc:
+    problemdetails:
+      enabled: true
+
 management:
   endpoints:
     web:

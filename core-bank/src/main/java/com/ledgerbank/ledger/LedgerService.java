@@ -8,6 +8,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +101,24 @@ public class LedgerService {
 		AccountBalance balance = balances.findById(accountId)
 				.orElseThrow(() -> new AccountNotFoundException(accountId));
 		return Money.of(balance.balance(), Currency.getInstance(balance.currency()));
+	}
+
+	/** Most-recent-first transaction history for an account (entries + posting metadata). */
+	@Transactional(readOnly = true)
+	public List<LedgerTransaction> history(UUID accountId, int limit) {
+		if (!balances.existsById(accountId)) {
+			throw new AccountNotFoundException(accountId);
+		}
+		List<LedgerEntry> entryRows = entries.findByAccountIdOrderByIdDesc(accountId, Limit.of(limit));
+		Map<UUID, Posting> postingsById = postings
+				.findAllById(entryRows.stream().map(LedgerEntry::postingId).distinct().toList())
+				.stream().collect(Collectors.toMap(Posting::id, Function.identity()));
+		return entryRows.stream().map(entry -> {
+			Posting posting = postingsById.get(entry.postingId());
+			return new LedgerTransaction(entry.id(), entry.postingId(), posting.type(),
+					Money.of(entry.amount(), Currency.getInstance(entry.currency())),
+					posting.description(), entry.createdAt());
+		}).toList();
 	}
 
 	/** The balance re-derived from the immutable entries — used to reconcile the snapshot. */
