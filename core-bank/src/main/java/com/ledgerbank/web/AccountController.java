@@ -7,6 +7,7 @@ import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.payments.DepositCommand;
 import com.ledgerbank.payments.PaymentResult;
 import com.ledgerbank.payments.PaymentsService;
+import com.ledgerbank.payments.WithdrawCommand;
 import com.ledgerbank.shared.Money;
 import jakarta.validation.Valid;
 import java.util.Currency;
@@ -78,6 +79,18 @@ public class AccountController {
 				Currency.getInstance(request.currency().trim().toUpperCase()));
 		PaymentResult result = payments.deposit(
 				new DepositCommand(accountId, amount, idempotencyKey, request.description()));
+		return new PaymentResponse(result.postingId(), MoneyView.from(ledger.balanceOf(accountId)));
+	}
+
+	@PostMapping("/{accountId}/withdrawals")
+	public PaymentResponse withdraw(@PathVariable UUID accountId,
+			@RequestHeader("Idempotency-Key") String idempotencyKey,
+			@Valid @RequestBody WithdrawRequest request, @AuthenticationPrincipal Jwt jwt) {
+		accounts.requireOwnedBy(accountId, Principals.userId(jwt));
+		Money amount = Money.ofMajor(request.amount(),
+				Currency.getInstance(request.currency().trim().toUpperCase()));
+		PaymentResult result = payments.withdraw(
+				new WithdrawCommand(accountId, amount, idempotencyKey, request.description()));
 		return new PaymentResponse(result.postingId(), MoneyView.from(ledger.balanceOf(accountId)));
 	}
 }

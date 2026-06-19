@@ -122,6 +122,42 @@ class PaymentsServiceIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	void withdraw_decreasesBalance() {
+		Account a = customer();
+		payments.deposit(new DepositCommand(a.id(), Money.of(1_000, USD), key(), null));
+
+		payments.withdraw(new WithdrawCommand(a.id(), Money.of(300, USD), key(), "atm"));
+
+		assertThat(ledger.balanceOf(a.id())).isEqualTo(Money.of(700, USD));
+	}
+
+	@Test
+	void withdraw_beyondBalance_isRejected() {
+		Account a = customer();
+		payments.deposit(new DepositCommand(a.id(), Money.of(100, USD), key(), null));
+
+		assertThatThrownBy(() -> payments.withdraw(
+				new WithdrawCommand(a.id(), Money.of(500, USD), key(), null)))
+				.isInstanceOf(InsufficientFundsException.class);
+
+		assertThat(ledger.balanceOf(a.id())).isEqualTo(Money.of(100, USD));
+	}
+
+	@Test
+	void withdraw_isIdempotent() {
+		Account a = customer();
+		payments.deposit(new DepositCommand(a.id(), Money.of(1_000, USD), key(), null));
+		String key = key();
+		WithdrawCommand cmd = new WithdrawCommand(a.id(), Money.of(200, USD), key, null);
+
+		PaymentResult first = payments.withdraw(cmd);
+		PaymentResult replay = payments.withdraw(cmd);
+
+		assertThat(replay.postingId()).isEqualTo(first.postingId());
+		assertThat(ledger.balanceOf(a.id())).isEqualTo(Money.of(800, USD));
+	}
+
+	@Test
 	void deposit_nonPositiveAmount_isRejected() {
 		Account a = customer();
 

@@ -45,6 +45,19 @@ public class PaymentsService {
 		});
 	}
 
+	public PaymentResult withdraw(WithdrawCommand command) {
+		requirePositive(command.amount());
+		String hash = requestHash("WITHDRAWAL", command.accountId().toString(), money(command.amount()));
+		return idempotency.execute(command.idempotencyKey(), hash, () -> {
+			var clearing = systemAccounts.clearingAccountFor(command.amount().currency());
+			var posting = ledger.record(new RecordPostingCommand(
+					PostingType.WITHDRAWAL, command.idempotencyKey(), command.description(),
+					List.of(new LedgerLeg(command.accountId(), command.amount().negate()),
+							new LedgerLeg(clearing, command.amount()))));
+			return new PaymentResult(posting.id());
+		});
+	}
+
 	public PaymentResult transfer(TransferCommand command) {
 		requirePositive(command.amount());
 		if (command.fromAccountId().equals(command.toAccountId())) {

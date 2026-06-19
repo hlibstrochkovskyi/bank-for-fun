@@ -101,6 +101,20 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	void withdraw_decreasesBalance() throws Exception {
+		UUID user = UUID.randomUUID();
+		UUID account = openCheckingAccount(user);
+		deposit(user, account, "100.00", UUID.randomUUID().toString());
+
+		mvc.perform(asUser(post("/api/accounts/{id}/withdrawals", account), user)
+						.header("Idempotency-Key", UUID.randomUUID().toString())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"amount\":\"40.00\",\"currency\":\"USD\",\"description\":\"atm\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.balanceAfter.minorUnits").value(6000));
+	}
+
+	@Test
 	void deposit_isIdempotent_replayWithSameKeyDoesNotDoubleCharge() throws Exception {
 		UUID user = UUID.randomUUID();
 		UUID account = openCheckingAccount(user);
