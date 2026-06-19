@@ -2,10 +2,12 @@ package com.ledgerbank.accounts;
 
 import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.shared.AccountNotFoundException;
+import com.ledgerbank.shared.events.AccountOpenedEvent;
 import java.util.Currency;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +22,13 @@ public class AccountService {
 
 	private final AccountRepository accounts;
 	private final LedgerService ledger;
+	private final ApplicationEventPublisher events;
 
-	public AccountService(AccountRepository accounts, LedgerService ledger) {
+	public AccountService(AccountRepository accounts, LedgerService ledger,
+			ApplicationEventPublisher events) {
 		this.accounts = accounts;
 		this.ledger = ledger;
+		this.events = events;
 	}
 
 	/** Open a customer account with no overdraft (floor of 0). */
@@ -35,6 +40,8 @@ public class AccountService {
 		}
 		Account account = accounts.save(new Account(ownerId, type, currency));
 		ledger.openBalance(account.id(), currency, 0L);
+		events.publishEvent(new AccountOpenedEvent(account.id(), ownerId, type.name(),
+				currency.getCurrencyCode()));
 		return account;
 	}
 
@@ -46,6 +53,8 @@ public class AccountService {
 		}
 		Account account = accounts.save(new Account(null, type, currency));
 		ledger.openBalance(account.id(), currency, null);
+		events.publishEvent(new AccountOpenedEvent(account.id(), null, type.name(),
+				currency.getCurrencyCode()));
 		return account;
 	}
 

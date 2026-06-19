@@ -2,6 +2,7 @@ package com.ledgerbank.ledger;
 
 import com.ledgerbank.shared.AccountNotFoundException;
 import com.ledgerbank.shared.Money;
+import com.ledgerbank.shared.events.MoneyPostedEvent;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,12 +30,14 @@ public class LedgerService {
 	private final AccountBalanceRepository balances;
 	private final PostingRepository postings;
 	private final LedgerEntryRepository entries;
+	private final org.springframework.context.ApplicationEventPublisher events;
 
 	public LedgerService(AccountBalanceRepository balances, PostingRepository postings,
-			LedgerEntryRepository entries) {
+			LedgerEntryRepository entries, org.springframework.context.ApplicationEventPublisher events) {
 		this.balances = balances;
 		this.postings = postings;
 		this.entries = entries;
+		this.events = events;
 	}
 
 	/** Initialise an account's balance snapshot at zero. {@code minBalance == null} = unbounded. */
@@ -126,6 +129,7 @@ public class LedgerService {
 					leg.amount().currency().getCurrencyCode()));
 		}
 		deltas.forEach((accountId, delta) -> locked.get(accountId).apply(delta));
+		events.publishEvent(new MoneyPostedEvent(posting.id(), type.name(), description));
 		return posting;
 	}
 
