@@ -9,11 +9,8 @@ CREATE TABLE account (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id    UUID,                                  -- NULL for system accounts
     type        TEXT        NOT NULL,                  -- CHECKING, SAVINGS, SYSTEM_CLEARING, ...
-    currency    CHAR(3)     NOT NULL,
+    currency    VARCHAR(3)     NOT NULL,
     status      TEXT        NOT NULL DEFAULT 'ACTIVE',
-    -- Lowest balance the account may hold. NULL means unbounded (system accounts
-    -- model the outside world and may go negative). Customer accounts default to 0.
-    min_balance BIGINT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -32,7 +29,7 @@ CREATE TABLE ledger_entry (
     posting_id UUID        NOT NULL REFERENCES posting(id),
     account_id UUID        NOT NULL REFERENCES account(id),
     amount     BIGINT      NOT NULL CHECK (amount <> 0),
-    currency   CHAR(3)     NOT NULL,
+    currency   VARCHAR(3)     NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_entry_account ON ledger_entry (account_id, id);
@@ -41,10 +38,15 @@ CREATE INDEX idx_entry_posting ON ledger_entry (posting_id);
 -- Derived snapshot of each account's balance, updated in the SAME transaction as
 -- the entries that change it. A cache of the ledger, reconcilable by re-summing.
 CREATE TABLE account_balance (
-    account_id UUID PRIMARY KEY REFERENCES account(id),
-    balance    BIGINT      NOT NULL DEFAULT 0,         -- minor units
-    version    BIGINT      NOT NULL DEFAULT 0,         -- optimistic-lock guard
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    account_id  UUID PRIMARY KEY REFERENCES account(id),
+    currency    VARCHAR(3)     NOT NULL,
+    balance     BIGINT      NOT NULL DEFAULT 0,        -- minor units
+    -- Lowest balance the account may hold; enforced under the same row lock as the
+    -- balance update. NULL means unbounded (system accounts model the outside world
+    -- and may go negative). Customer accounts default to 0 (no overdraft).
+    min_balance BIGINT,
+    version     BIGINT      NOT NULL DEFAULT 0,        -- optimistic-lock guard
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Durable idempotency record for money-moving requests.

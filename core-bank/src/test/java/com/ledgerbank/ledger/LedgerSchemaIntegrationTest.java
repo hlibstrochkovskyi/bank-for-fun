@@ -26,7 +26,7 @@ class LedgerSchemaIntegrationTest extends AbstractIntegrationTest {
 	private UUID openAccount(String currency) {
 		UUID id = UUID.randomUUID();
 		jdbc.update(
-				"INSERT INTO account (id, owner_id, type, currency, min_balance) VALUES (?, ?, 'CHECKING', ?, 0)",
+				"INSERT INTO account (id, owner_id, type, currency) VALUES (?, ?, 'CHECKING', ?)",
 				id, UUID.randomUUID(), currency);
 		return id;
 	}
