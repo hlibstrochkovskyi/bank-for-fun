@@ -3,6 +3,7 @@ package com.ledgerbank.ledger;
 import com.ledgerbank.shared.AccountNotFoundException;
 import com.ledgerbank.shared.Money;
 import com.ledgerbank.shared.events.MoneyPostedEvent;
+import java.time.OffsetDateTime;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -144,10 +145,28 @@ public class LedgerService {
 	/** Most-recent-first transaction history for an account (entries + posting metadata). */
 	@Transactional(readOnly = true)
 	public List<LedgerTransaction> history(UUID accountId, int limit) {
-		if (!balances.existsById(accountId)) {
-			throw new AccountNotFoundException(accountId);
-		}
-		List<LedgerEntry> entryRows = entries.findByAccountIdOrderByIdDesc(accountId, Limit.of(limit));
+		requireAccount(accountId);
+		return enrich(entries.findByAccountIdOrderByIdDesc(accountId, Limit.of(limit)));
+	}
+
+	/** Entries within [fromInclusive, toExclusive), oldest first — the body of a statement. */
+	@Transactional(readOnly = true)
+	public List<LedgerTransaction> entriesBetween(UUID accountId, OffsetDateTime fromInclusive,
+			OffsetDateTime toExclusive) {
+		requireAccount(accountId);
+		return enrich(entries.findByAccountIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByIdAsc(
+				accountId, fromInclusive, toExclusive));
+	}
+
+	/** Balance as of an instant, re-derived from entries strictly before it. */
+	@Transactional(readOnly = true)
+	public Money balanceAsOf(UUID accountId, OffsetDateTime before) {
+		AccountBalance balance = requireAccount(accountId);
+		return Money.of(entries.sumAmountBefore(accountId, before),
+				Currency.getInstance(balance.currency()));
+	}
+
+	private List<LedgerTransaction> enrich(List<LedgerEntry> entryRows) {
 		Map<UUID, Posting> postingsById = postings
 				.findAllById(entryRows.stream().map(LedgerEntry::postingId).distinct().toList())
 				.stream().collect(Collectors.toMap(Posting::id, Function.identity()));
@@ -157,6 +176,11 @@ public class LedgerService {
 					Money.of(entry.amount(), Currency.getInstance(entry.currency())),
 					posting.description(), entry.createdAt());
 		}).toList();
+	}
+
+	private AccountBalance requireAccount(UUID accountId) {
+		return balances.findById(accountId)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
 	}
 
 	/** The balance re-derived from the immutable entries — used to reconcile the snapshot. */

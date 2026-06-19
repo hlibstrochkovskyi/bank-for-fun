@@ -9,10 +9,14 @@ import com.ledgerbank.payments.PaymentResult;
 import com.ledgerbank.payments.PaymentsService;
 import com.ledgerbank.payments.WithdrawCommand;
 import com.ledgerbank.shared.Money;
+import com.ledgerbank.statements.StatementsService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,11 +37,14 @@ public class AccountController {
 	private final AccountService accounts;
 	private final LedgerService ledger;
 	private final PaymentsService payments;
+	private final StatementsService statements;
 
-	public AccountController(AccountService accounts, LedgerService ledger, PaymentsService payments) {
+	public AccountController(AccountService accounts, LedgerService ledger, PaymentsService payments,
+			StatementsService statements) {
 		this.accounts = accounts;
 		this.ledger = ledger;
 		this.payments = payments;
+		this.statements = statements;
 	}
 
 	@PostMapping
@@ -68,6 +75,18 @@ public class AccountController {
 			@RequestParam(defaultValue = "50") int limit, @AuthenticationPrincipal Jwt jwt) {
 		accounts.requireOwnedBy(accountId, Principals.userId(jwt));
 		return ledger.history(accountId, limit).stream().map(TransactionResponse::from).toList();
+	}
+
+	@GetMapping("/{accountId}/statement")
+	public StatementResponse statement(@PathVariable UUID accountId,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+			@AuthenticationPrincipal Jwt jwt) {
+		accounts.requireOwnedBy(accountId, Principals.userId(jwt));
+		// 'from' and 'to' are inclusive calendar days (UTC); the period is [from 00:00, to+1 00:00).
+		var fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+		var toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+		return StatementResponse.from(statements.statement(accountId, fromInclusive, toExclusive));
 	}
 
 	@PostMapping("/{accountId}/deposits")

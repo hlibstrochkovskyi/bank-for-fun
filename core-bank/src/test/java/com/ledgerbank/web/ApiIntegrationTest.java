@@ -145,6 +145,22 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	void statement_returnsOpeningClosingAndLines() throws Exception {
+		UUID user = UUID.randomUUID();
+		UUID account = openCheckingAccount(user);
+		deposit(user, account, "100.00", UUID.randomUUID().toString());
+		String today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString();
+
+		mvc.perform(asUser(get("/api/accounts/{id}/statement", account), user)
+						.param("from", today).param("to", today))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.openingBalance.minorUnits").value(0))
+				.andExpect(jsonPath("$.closingBalance.minorUnits").value(10000))
+				.andExpect(jsonPath("$.totalCredits.minorUnits").value(10000))
+				.andExpect(jsonPath("$.transactions[0].amount.minorUnits").value(10000));
+	}
+
+	@Test
 	void accessingAnotherUsersAccount_isForbidden() throws Exception {
 		UUID owner = UUID.randomUUID();
 		UUID intruder = UUID.randomUUID();
