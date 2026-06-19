@@ -41,8 +41,8 @@ fmt: ## Format code (wired up in a later phase).
 lint: ## Static analysis (wired up in a later phase).
 	@echo "lint: not configured yet (Checkstyle/SpotBugs land in Phase 5)."
 
-seed: ## Seed demo data (lands with Phase 1 money operations).
-	@echo "seed: not configured yet (arrives in Phase 1)."
+seed: ## Seed demo data through the API (stack must be up; see infra/seed.sh).
+	./infra/seed.sh
 
 clean: ## Stop the stack and delete volumes (DESTROYS local data).
 	docker compose down -v

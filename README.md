@@ -35,6 +35,8 @@ See [ADR-0001](docs/adr/0001-modular-monolith.md) for why a monolith.
 |-------------|-----------------------------------------------------|
 | Core        | Java 21 (LTS), Spring Boot 4, Spring MVC + virtual threads |
 | Persistence | PostgreSQL, Spring Data JPA / Hibernate, Flyway     |
+| Auth        | Keycloak (OIDC); app is an OAuth2 resource server   |
+| API docs    | springdoc-openapi (Swagger UI), RFC 7807 errors     |
 | Build       | Gradle (Kotlin DSL), wrapper-pinned                 |
 | Testing     | JUnit 5, Testcontainers (real Postgres)             |
 | Local infra | Docker Compose                                      |
@@ -60,6 +62,20 @@ make down
 
 Run `make help` for all commands.
 
+### Exploring the API
+
+The stack includes Keycloak (realm `ledger-bank`, demo users `alice` / `bob`,
+password `password`). Once `make up` is healthy:
+
+- **Swagger UI:** http://localhost:8080/swagger-ui.html (click *Authorize* and paste a token)
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+- **Keycloak:** http://localhost:8088 (admin `admin` / `admin`)
+- **Seed demo data through the API:** `make seed`
+- **Postman:** import `infra/postman/ledger-bank.postman_collection.json`, run *Login* first
+
+All `/api/**` endpoints require a Keycloak bearer token; a user can only access
+their own accounts, and money endpoints require an `Idempotency-Key` header.
+
 ## Project status
 
 Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
@@ -67,9 +83,10 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
 
 - [x] **Phase 0 — Foundation:** monorepo, Docker Compose + Postgres, Spring Boot
   skeleton with Flyway + Actuator health, CI, ADR-0001 / ADR-0002.
-- [ ] **Phase 1 — Minimum finishable core:** auth, accounts, the double-entry
-  ledger, deposit + transfer, derived balances, idempotency, history, and the
-  concurrency invariant test.
+- [x] **Phase 1 — Minimum finishable core:** Keycloak auth, accounts, the
+  double-entry ledger (DB-enforced balance invariant), deposit + transfer,
+  derived balances, idempotency, transaction history, the concurrency invariant
+  test, REST API with RFC 7807 errors, Swagger UI, seed script + Postman.
 - [ ] Phase 2 — Harden & expand (reversals, statements, rate limiting, observability, audit).
 - [ ] Phase 3 — Polyglot fraud engine + async messaging.
 - [ ] Phase 4 — Next.js frontend.
@@ -81,15 +98,21 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
 ```
 ledger-bank/
 ├── core-bank/        # Java / Spring Boot modular monolith
+│   └── src/main/java/com/ledgerbank/  # accounts, ledger, payments, web, config, shared
+├── infra/
+│   ├── keycloak/     # realm export
+│   ├── postman/      # API collection
+│   └── seed.sh       # seed demo data through the API
 ├── docs/
 │   ├── adr/          # Architecture Decision Records
 │   └── plan/         # the implementation plan
+├── .github/workflows/ # CI
 ├── docker-compose.yml
 └── Makefile
 ```
 
 Future homes (added with their phases): `fraud-service/` (Python), `frontend/`
-(Next.js), `infra/` (observability, Keycloak), `.github/workflows/`.
+(Next.js), `infra/observability/`.
 
 ## License
 

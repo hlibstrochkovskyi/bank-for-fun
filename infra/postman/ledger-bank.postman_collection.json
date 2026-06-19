@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "ledger-bank",
+    "description": "Exercises the ledger-bank API end-to-end. Run 'Login' first to fetch a Keycloak token (stored in the collection variable accessToken); the other requests use it automatically. Requires the stack to be up (make up).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "kcUrl", "value": "http://localhost:8088" },
+    { "key": "realm", "value": "ledger-bank" },
+    { "key": "clientId", "value": "ledger-bank-web" },
+    { "key": "username", "value": "alice" },
+    { "key": "password", "value": "password" },
+    { "key": "accessToken", "value": "" },
+    { "key": "checkingId", "value": "" },
+    { "key": "savingsId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login (get token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', json.access_token);",
+              "pm.test('got access token', () => pm.expect(json.access_token).to.be.a('string'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{clientId}}" },
+            { "key": "username", "value": "{{username}}" },
+            { "key": "password", "value": "{{password}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kcUrl}}/realms/{{realm}}/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "Open checking account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('checkingId', pm.response.json().id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"CHECKING\",\n  \"currency\": \"USD\"\n}" },
+        "url": "{{baseUrl}}/api/accounts"
+      }
+    },
+    {
+      "name": "Open savings account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('savingsId', pm.response.json().id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"SAVINGS\",\n  \"currency\": \"USD\"\n}" },
+        "url": "{{baseUrl}}/api/accounts"
+      }
+    },
+    {
+      "name": "Deposit into checking",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": \"1000.00\",\n  \"currency\": \"USD\",\n  \"description\": \"opening deposit\"\n}" },
+        "url": "{{baseUrl}}/api/accounts/{{checkingId}}/deposits"
+      }
+    },
+    {
+      "name": "Transfer checking -> savings",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"fromAccountId\": \"{{checkingId}}\",\n  \"toAccountId\": \"{{savingsId}}\",\n  \"amount\": \"250.00\",\n  \"currency\": \"USD\",\n  \"description\": \"to savings\"\n}" },
+        "url": "{{baseUrl}}/api/transfers"
+      }
+    },
+    {
+      "name": "List my accounts",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+        "url": "{{baseUrl}}/api/accounts"
+      }
+    },
+    {
+      "name": "Checking transaction history",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+        "url": "{{baseUrl}}/api/accounts/{{checkingId}}/transactions"
+      }
+    }
+  ]
+}
