@@ -86,8 +86,12 @@ metrics scraped:
 - **Grafana:** http://localhost:3001 (anonymous admin) — Prometheus, Tempo, Loki provisioned
 - **Prometheus:** http://localhost:9090 — scrapes `core-bank:/actuator/prometheus`
 - **Metrics:** `/actuator/prometheus` (e.g. `ledger_postings_total{type="TRANSFER"}`)
-- **Traces:** exported via OTLP to **Tempo**; **Loki** ingests the app's structured
-  (ECS JSON) logs via promtail.
+- **Traces:** wired via OTLP to **Tempo** (Tempo + the OTLP path are verified;
+  live span export from the app on Boot 4.1 is still being finalised).
+- **Logs:** the app emits structured (ECS JSON) logs which **promtail** ships to **Loki**.
+
+> Verified live: Prometheus scrapes core-bank, custom `ledger_postings` metrics,
+> ECS JSON logs, and the provisioned Grafana datasources.
 
 ## Project status
 

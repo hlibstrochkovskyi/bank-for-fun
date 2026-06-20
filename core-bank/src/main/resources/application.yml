@@ -68,8 +68,18 @@ management:
     sampling:
       probability: 1.0     # sample everything in dev
   otlp:
+    # Traces go to Tempo via OTLP. Metrics use Prometheus (scrape), not OTLP, and
+    # logs use the structured console (-> Loki via promtail), so disable those
+    # OTLP exporters that spring-boot-starter-opentelemetry enables by default.
     tracing:
       endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
 
 info:
   app:
