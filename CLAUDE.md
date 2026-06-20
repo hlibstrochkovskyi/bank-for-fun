@@ -77,17 +77,19 @@ is the concurrency money-conservation test — keep it front and center.
 
 ## Current status
 
-Phases 0, 1, and 2 complete. Phase 2 added: withdrawals; reversals as compensating
-postings (admin-gated, never edits); append-only audit log (DB trigger forbids
-update/delete, driven by domain events); date-range statements; scheduled standing
-orders; Redis rate limiting on money endpoints; and observability (Micrometer/
-Prometheus metrics, OTLP tracing → Tempo, ECS structured logs → Loki, Grafana).
-ADRs 0001–0006 written.
+Phases 0–3 complete. Phase 3 added: a **Python (FastAPI) fraud-service** (rule-based
+scoring) the core calls synchronously; flagged transfers are **held** (not posted),
+visible to the customer, and released/rejected by an admin (`held_transfer`, V6);
+**RabbitMQ** carries domain events (`DomainEventForwarder`, AFTER_COMMIT) to a
+**notification worker** that emails via **Mailhog**; and the trace spans both
+services (Python is OTel-instrumented). ADRs 0001–0007, 0009 written.
 
-Module packages under `com.ledgerbank`: `accounts`, `ledger`, `payments`,
-`statements`, `standingorders`, `audit`, `ratelimit`, `web` (controllers/DTOs),
-`config` (security, OpenAPI, scheduling, web/rate-limit), `shared` (Money, events,
-common kernel).
+Tracing note: core-bank's outbound fraud call uses **Apache HttpClient5** (the JDK
+HttpClient drops the body under the OTel agent + virtual threads). Java fraud tests
+mock `FraudClient`; `RestFraudClientTest` exercises the real HTTP serialization.
 
-Next: Phase 3 — Python fraud/risk service (FastAPI) + RabbitMQ async events +
-notifications worker (Mailhog).
+Module packages under `com.ledgerbank`: `accounts`, `ledger`, `payments`, `fraud`,
+`messaging`, `notifications`, `statements`, `standingorders`, `audit`, `ratelimit`,
+`web`, `config`, `shared`.
+
+Next: Phase 4 — Next.js + TypeScript frontend.

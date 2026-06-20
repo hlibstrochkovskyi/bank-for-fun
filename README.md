@@ -38,7 +38,9 @@ See [ADR-0001](docs/adr/0001-modular-monolith.md) for why a monolith.
 | Auth        | Keycloak (OIDC); app is an OAuth2 resource server   |
 | API docs    | springdoc-openapi (Swagger UI), RFC 7807 errors     |
 | Cache/limit | Redis (rate limiting)                               |
-| Observability | Micrometer/Prometheus, OpenTelemetry → Tempo, Loki, Grafana |
+| Fraud engine | Python + FastAPI (rule-based risk scoring)         |
+| Messaging   | RabbitMQ (async domain events), Mailhog (dev SMTP)  |
+| Observability | Micrometer/Prometheus, OpenTelemetry → Tempo (across both services), Loki, Grafana |
 | Build       | Gradle (Kotlin DSL), wrapper-pinned                 |
 | Testing     | JUnit 5, Testcontainers (real Postgres + Redis)     |
 | Local infra | Docker Compose                                      |
@@ -72,6 +74,11 @@ password `password`). Once `make up` is healthy:
 - **Swagger UI:** http://localhost:8080/swagger-ui.html (click *Authorize* and paste a token)
 - **OpenAPI JSON:** http://localhost:8080/v3/api-docs
 - **Keycloak:** http://localhost:8088 (admin `admin` / `admin`)
+- **Mailhog (held-transfer emails):** http://localhost:8025
+- **RabbitMQ management:** http://localhost:15672 (guest / guest)
+- **Try the fraud hold:** transfer ≥ $10,000 → held for review (HTTP 202); see it in
+  `GET /api/held-transfers`, the email in Mailhog, and the trace across both
+  services in Grafana/Tempo. `bob` (admin) releases it via `POST /api/admin/held-transfers/{id}/release`.
 - **Seed demo data through the API:** `make seed`
 - **Postman:** import `infra/postman/ledger-bank.postman_collection.json`, run *Login* first
 
@@ -111,7 +118,11 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
 - [x] **Phase 2 — Harden & expand:** withdrawals, reversals (compensating postings,
   admin-gated), append-only audit log, date-range statements, scheduled standing
   orders, Redis rate limiting, and full observability (metrics, tracing, structured logs).
-- [ ] Phase 3 — Polyglot fraud engine + async messaging.
+- [x] **Phase 3 — Polyglot + async:** a Python (FastAPI) fraud engine the core calls
+  synchronously; flagged transfers are **held** (not posted), visible to the
+  customer, and released/rejected by an admin. Domain events flow through
+  **RabbitMQ** to a notification worker that emails via **Mailhog**. A single
+  transfer trace spans **both services** in Tempo.
 - [ ] Phase 4 — Next.js frontend.
 - [ ] Phase 5 — DevOps & quality polish.
 - [ ] Phase 6 — Documentation & presentation.
@@ -121,7 +132,9 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
 ```
 ledger-bank/
 ├── core-bank/        # Java / Spring Boot modular monolith
-│   └── src/main/java/com/ledgerbank/  # accounts, ledger, payments, web, config, shared
+│   └── src/main/java/com/ledgerbank/  # accounts, ledger, payments, fraud, messaging,
+│                                      # notifications, audit, statements, web, config, shared
+├── fraud-service/    # Python / FastAPI risk-scoring service
 ├── infra/
 │   ├── keycloak/     # realm export
 │   ├── postman/      # API collection
@@ -134,8 +147,7 @@ ledger-bank/
 └── Makefile
 ```
 
-Future homes (added with their phases): `fraud-service/` (Python), `frontend/`
-(Next.js), `infra/observability/`.
+Future homes (added with their phases): `frontend/` (Next.js).
 
 ## License
 
