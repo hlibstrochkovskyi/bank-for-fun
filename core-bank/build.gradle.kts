@@ -27,6 +27,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.boot:spring-boot-starter-amqp")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	// Observability: Prometheus metrics (scraped). Distributed tracing is provided by
@@ -48,6 +49,7 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")
 	testImplementation("org.testcontainers:rabbitmq")
+	testImplementation("com.icegreen:greenmail-junit5:2.1.3")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
