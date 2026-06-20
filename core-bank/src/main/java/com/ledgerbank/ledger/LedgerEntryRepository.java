@@ -28,4 +28,7 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
 
 	/** All entries belonging to a posting (used to build its inverse for reversal). */
 	List<LedgerEntry> findByPostingId(UUID postingId);
+
+	/** Count of outgoing (debit) entries for an account since an instant — a velocity signal. */
+	long countByAccountIdAndAmountLessThanAndCreatedAtAfter(UUID accountId, long amount, OffsetDateTime after);
 }

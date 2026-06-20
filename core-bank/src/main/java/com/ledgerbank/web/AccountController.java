@@ -100,7 +100,7 @@ public class AccountController {
 				Currency.getInstance(request.currency().trim().toUpperCase()));
 		PaymentResult result = payments.deposit(
 				new DepositCommand(accountId, amount, idempotencyKey, request.description()));
-		return new PaymentResponse(result.postingId(), MoneyView.from(ledger.balanceOf(accountId)));
+		return PaymentResponse.from(result, MoneyView.from(ledger.balanceOf(accountId)));
 	}
 
 	@RateLimited("money")
@@ -113,6 +113,6 @@ public class AccountController {
 				Currency.getInstance(request.currency().trim().toUpperCase()));
 		PaymentResult result = payments.withdraw(
 				new WithdrawCommand(accountId, amount, idempotencyKey, request.description()));
-		return new PaymentResponse(result.postingId(), MoneyView.from(ledger.balanceOf(accountId)));
+		return PaymentResponse.from(result, MoneyView.from(ledger.balanceOf(accountId)));
 	}
 }

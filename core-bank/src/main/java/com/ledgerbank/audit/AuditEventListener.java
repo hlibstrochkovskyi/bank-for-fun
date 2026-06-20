@@ -2,6 +2,7 @@ package com.ledgerbank.audit;
 
 import com.ledgerbank.shared.events.AccountOpenedEvent;
 import com.ledgerbank.shared.events.MoneyPostedEvent;
+import com.ledgerbank.shared.events.TransferHeldEvent;
 import java.util.Map;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -30,5 +31,11 @@ class AuditEventListener {
 	void on(MoneyPostedEvent event) {
 		audit.log("MONEY_POSTED", "POSTING", event.postingId().toString(),
 				Map.of("type", event.postingType()));
+	}
+
+	@EventListener
+	void on(TransferHeldEvent event) {
+		audit.log("TRANSFER_HELD", "HELD_TRANSFER", event.heldTransferId().toString(),
+				Map.of("score", event.riskScore(), "reason", event.reason()));
 	}
 }

@@ -5,6 +5,7 @@ import com.ledgerbank.ledger.InsufficientFundsException;
 import com.ledgerbank.ledger.PostingNotFoundException;
 import com.ledgerbank.ledger.ReversalNotAllowedException;
 import com.ledgerbank.ledger.UnbalancedPostingException;
+import com.ledgerbank.payments.HeldTransferNotFoundException;
 import com.ledgerbank.payments.IdempotencyConflictException;
 import com.ledgerbank.ratelimit.RateLimitExceededException;
 import com.ledgerbank.shared.AccountNotFoundException;
@@ -45,6 +46,16 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(IdempotencyConflictException.class)
 	ProblemDetail handleIdempotencyConflict(IdempotencyConflictException ex) {
 		return problem(HttpStatus.CONFLICT, "Idempotency conflict", ex.getMessage());
+	}
+
+	@ExceptionHandler(HeldTransferNotFoundException.class)
+	ProblemDetail handleHeldTransferNotFound(HeldTransferNotFoundException ex) {
+		return problem(HttpStatus.NOT_FOUND, "Held transfer not found", ex.getMessage());
+	}
+
+	@ExceptionHandler(IllegalStateException.class)
+	ProblemDetail handleIllegalState(IllegalStateException ex) {
+		return problem(HttpStatus.CONFLICT, "Conflict", ex.getMessage());
 	}
 
 	@ExceptionHandler({UnbalancedPostingException.class, CurrencyMismatchException.class})

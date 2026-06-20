@@ -4,11 +4,14 @@ import com.ledgerbank.accounts.AccountService;
 import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.payments.PaymentResult;
 import com.ledgerbank.payments.PaymentsService;
+import com.ledgerbank.payments.PaymentStatus;
 import com.ledgerbank.payments.TransferCommand;
 import com.ledgerbank.ratelimit.RateLimited;
 import com.ledgerbank.shared.Money;
 import jakarta.validation.Valid;
 import java.util.Currency;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +36,7 @@ public class TransferController {
 
 	@RateLimited("money")
 	@PostMapping
-	public PaymentResponse transfer(@RequestHeader("Idempotency-Key") String idempotencyKey,
+	public ResponseEntity<PaymentResponse> transfer(@RequestHeader("Idempotency-Key") String idempotencyKey,
 			@Valid @RequestBody TransferRequest request, @AuthenticationPrincipal Jwt jwt) {
 		// Resource authorization: the source account must belong to the caller.
 		accounts.requireOwnedBy(request.fromAccountId(), Principals.userId(jwt));
@@ -41,7 +44,10 @@ public class TransferController {
 				Currency.getInstance(request.currency().trim().toUpperCase()));
 		PaymentResult result = payments.transfer(new TransferCommand(
 				request.fromAccountId(), request.toAccountId(), amount, idempotencyKey, request.description()));
-		return new PaymentResponse(result.postingId(),
+		PaymentResponse body = PaymentResponse.from(result,
 				MoneyView.from(ledger.balanceOf(request.fromAccountId())));
+		// A held transfer is accepted but not yet completed.
+		HttpStatus status = result.status() == PaymentStatus.HELD ? HttpStatus.ACCEPTED : HttpStatus.OK;
+		return ResponseEntity.status(status).body(body);
 	}
 }

@@ -1,5 +1,8 @@
 package com.ledgerbank.payments;
 
+import com.ledgerbank.fraud.FraudCheckRequest;
+import com.ledgerbank.fraud.FraudClient;
+import com.ledgerbank.fraud.RiskDecision;
 import com.ledgerbank.ledger.LedgerLeg;
 import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.ledger.PostingType;
@@ -24,12 +27,19 @@ public class PaymentsService {
 	private final LedgerService ledger;
 	private final SystemAccountService systemAccounts;
 	private final IdempotencyService idempotency;
+	private final FraudClient fraudClient;
+	private final FraudSignals fraudSignals;
+	private final HeldTransferService heldTransfers;
 
 	public PaymentsService(LedgerService ledger, SystemAccountService systemAccounts,
-			IdempotencyService idempotency) {
+			IdempotencyService idempotency, FraudClient fraudClient, FraudSignals fraudSignals,
+			HeldTransferService heldTransfers) {
 		this.ledger = ledger;
 		this.systemAccounts = systemAccounts;
 		this.idempotency = idempotency;
+		this.fraudClient = fraudClient;
+		this.fraudSignals = fraudSignals;
+		this.heldTransfers = heldTransfers;
 	}
 
 	public PaymentResult deposit(DepositCommand command) {
@@ -41,7 +51,7 @@ public class PaymentsService {
 					PostingType.DEPOSIT, command.idempotencyKey(), command.description(),
 					List.of(new LedgerLeg(clearing, command.amount().negate()),
 							new LedgerLeg(command.accountId(), command.amount()))));
-			return new PaymentResult(posting.id());
+			return PaymentResult.completed(posting.id());
 		});
 	}
 
@@ -54,7 +64,7 @@ public class PaymentsService {
 					PostingType.WITHDRAWAL, command.idempotencyKey(), command.description(),
 					List.of(new LedgerLeg(command.accountId(), command.amount().negate()),
 							new LedgerLeg(clearing, command.amount()))));
-			return new PaymentResult(posting.id());
+			return PaymentResult.completed(posting.id());
 		});
 	}
 
@@ -66,18 +76,34 @@ public class PaymentsService {
 		String hash = requestHash("TRANSFER", command.fromAccountId().toString(),
 				command.toAccountId().toString(), money(command.amount()));
 		return idempotency.execute(command.idempotencyKey(), hash, () -> {
+			// Fraud screening: a flagged transfer is held, not posted.
+			RiskDecision decision = screen(command);
+			if (decision.isHold()) {
+				HeldTransfer held = heldTransfers.hold(command.fromAccountId(), command.toAccountId(),
+						command.amount(), command.idempotencyKey(), command.description(), decision);
+				return PaymentResult.held(held.id());
+			}
 			var posting = ledger.record(new RecordPostingCommand(
 					PostingType.TRANSFER, command.idempotencyKey(), command.description(),
 					List.of(new LedgerLeg(command.fromAccountId(), command.amount().negate()),
 							new LedgerLeg(command.toAccountId(), command.amount()))));
-			return new PaymentResult(posting.id());
+			return PaymentResult.completed(posting.id());
 		});
+	}
+
+	private RiskDecision screen(TransferCommand command) {
+		FraudSignals.TransferSignals signals = fraudSignals.forTransfer(
+				command.fromAccountId(), command.toAccountId());
+		return fraudClient.score(new FraudCheckRequest(
+				command.amount().minorUnits(), command.amount().currency().getCurrencyCode(),
+				command.fromAccountId(), command.toAccountId(),
+				signals.newPayee(), signals.recentTransferCount()));
 	}
 
 	public PaymentResult reverse(ReverseCommand command) {
 		String hash = requestHash("REVERSAL", command.postingId().toString());
 		return idempotency.execute(command.idempotencyKey(), hash, () ->
-				new PaymentResult(ledger.reverse(command.postingId(), command.idempotencyKey(),
+				PaymentResult.completed(ledger.reverse(command.postingId(), command.idempotencyKey(),
 						command.reason()).id()));
 	}
 

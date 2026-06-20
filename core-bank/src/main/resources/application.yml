@@ -82,3 +82,6 @@ ledgerbank:
       money:
         limit: 30          # requests
         window-seconds: 60 # per rolling window, per user
+  fraud:
+    enabled: ${FRAUD_ENABLED:false}            # off by default; on in docker-compose
+    base-url: ${FRAUD_BASE_URL:http://localhost:8000}
