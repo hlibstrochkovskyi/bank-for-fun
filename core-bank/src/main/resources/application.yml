@@ -20,6 +20,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   # Project Loom: blocking + virtual threads scales the simple servlet stack.
   threads:
     virtual:
@@ -67,3 +72,8 @@ ledgerbank:
     enabled: true
     standing-orders:
       fixed-delay: 60000   # ms between standing-order sweeps
+  rate-limit:
+    buckets:
+      money:
+        limit: 30          # requests
+        window-seconds: 60 # per rolling window, per user

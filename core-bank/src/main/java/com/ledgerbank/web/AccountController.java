@@ -8,6 +8,7 @@ import com.ledgerbank.payments.DepositCommand;
 import com.ledgerbank.payments.PaymentResult;
 import com.ledgerbank.payments.PaymentsService;
 import com.ledgerbank.payments.WithdrawCommand;
+import com.ledgerbank.ratelimit.RateLimited;
 import com.ledgerbank.shared.Money;
 import com.ledgerbank.statements.StatementsService;
 import jakarta.validation.Valid;
@@ -89,6 +90,7 @@ public class AccountController {
 		return StatementResponse.from(statements.statement(accountId, fromInclusive, toExclusive));
 	}
 
+	@RateLimited("money")
 	@PostMapping("/{accountId}/deposits")
 	public PaymentResponse deposit(@PathVariable UUID accountId,
 			@RequestHeader("Idempotency-Key") String idempotencyKey,
@@ -101,6 +103,7 @@ public class AccountController {
 		return new PaymentResponse(result.postingId(), MoneyView.from(ledger.balanceOf(accountId)));
 	}
 
+	@RateLimited("money")
 	@PostMapping("/{accountId}/withdrawals")
 	public PaymentResponse withdraw(@PathVariable UUID accountId,
 			@RequestHeader("Idempotency-Key") String idempotencyKey,

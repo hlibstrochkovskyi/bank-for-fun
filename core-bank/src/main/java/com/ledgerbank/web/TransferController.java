@@ -5,6 +5,7 @@ import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.payments.PaymentResult;
 import com.ledgerbank.payments.PaymentsService;
 import com.ledgerbank.payments.TransferCommand;
+import com.ledgerbank.ratelimit.RateLimited;
 import com.ledgerbank.shared.Money;
 import jakarta.validation.Valid;
 import java.util.Currency;
@@ -30,6 +31,7 @@ public class TransferController {
 		this.ledger = ledger;
 	}
 
+	@RateLimited("money")
 	@PostMapping
 	public PaymentResponse transfer(@RequestHeader("Idempotency-Key") String idempotencyKey,
 			@Valid @RequestBody TransferRequest request, @AuthenticationPrincipal Jwt jwt) {

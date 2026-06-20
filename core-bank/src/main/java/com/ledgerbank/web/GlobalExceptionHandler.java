@@ -6,6 +6,7 @@ import com.ledgerbank.ledger.PostingNotFoundException;
 import com.ledgerbank.ledger.ReversalNotAllowedException;
 import com.ledgerbank.ledger.UnbalancedPostingException;
 import com.ledgerbank.payments.IdempotencyConflictException;
+import com.ledgerbank.ratelimit.RateLimitExceededException;
 import com.ledgerbank.shared.AccountNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -54,6 +55,12 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(AccessDeniedException.class)
 	ProblemDetail handleAccessDenied(AccessDeniedException ex) {
 		return problem(HttpStatus.FORBIDDEN, "Forbidden", "You do not have access to this resource.");
+	}
+
+	@ExceptionHandler(RateLimitExceededException.class)
+	ProblemDetail handleRateLimited(RateLimitExceededException ex) {
+		return problem(HttpStatus.TOO_MANY_REQUESTS, "Too many requests",
+				"Rate limit exceeded; please slow down and retry shortly.");
 	}
 
 	@ExceptionHandler({IllegalArgumentException.class, ArithmeticException.class})
