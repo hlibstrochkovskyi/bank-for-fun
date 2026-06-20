@@ -19,4 +19,6 @@ RUN useradd --system appuser && chown -R appuser /app
 USER appuser
 
 EXPOSE 8000
-CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# opentelemetry-instrument auto-instruments FastAPI and exports OTLP (configured via
+# OTEL_* env in docker-compose); it is a no-op if those vars are unset.
+CMD [".venv/bin/opentelemetry-instrument", ".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
