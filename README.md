@@ -33,6 +33,7 @@ See [ADR-0001](docs/adr/0001-modular-monolith.md) for why a monolith.
 
 | Area        | Choice                                              |
 |-------------|-----------------------------------------------------|
+| Frontend    | Next.js 16 + TypeScript, Tailwind v4, shadcn/ui, TanStack Query, Auth.js (BFF) |
 | Core        | Java 21 (LTS), Spring Boot 4, Spring MVC + virtual threads |
 | Persistence | PostgreSQL, Spring Data JPA / Hibernate, Flyway     |
 | Auth        | Keycloak (OIDC); app is an OAuth2 resource server   |
@@ -85,6 +86,23 @@ password `password`). Once `make up` is healthy:
 All `/api/**` endpoints require a Keycloak bearer token; a user can only access
 their own accounts, and money endpoints require an `Idempotency-Key` header.
 
+### The web app
+
+The Next.js frontend runs on the host (it's a BFF — see
+[ADR-0010](docs/adr/0010-frontend-bff.md)). With the stack up (`make up`):
+
+```bash
+cd frontend
+cp .env.example .env.local      # then set AUTH_SECRET (npx auth secret)
+npm install
+npm run dev                     # http://localhost:3000
+```
+
+Sign in as `alice` / `password`, open accounts, deposit, and transfer. Try a
+transfer ≥ $10,000 to see it **held for review**; the held-transfers page shows it.
+The frontend talks only to its own `/api/bank/*` proxy, which forwards your token
+to core-bank server-side — the browser never sees the access token.
+
 ### Observability
 
 `make up` also starts the LGTM stack. A transfer is traced end-to-end and its
@@ -123,7 +141,10 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
   customer, and released/rejected by an admin. Domain events flow through
   **RabbitMQ** to a notification worker that emails via **Mailhog**. A single
   transfer trace spans **both services** in Tempo.
-- [ ] Phase 4 — Next.js frontend.
+- [x] **Phase 4 — Frontend:** Next.js + TypeScript + Tailwind + shadcn/ui (Calm
+  Indigo). Keycloak OIDC login via a **BFF** (tokens stay server-side), dashboard
+  with a balance-trend chart, transfer flow (idempotent, with held-transfer UX),
+  account detail + history + date-range statements, and a held-transfers view.
 - [ ] Phase 5 — DevOps & quality polish.
 - [ ] Phase 6 — Documentation & presentation.
 
@@ -135,6 +156,7 @@ ledger-bank/
 │   └── src/main/java/com/ledgerbank/  # accounts, ledger, payments, fraud, messaging,
 │                                      # notifications, audit, statements, web, config, shared
 ├── fraud-service/    # Python / FastAPI risk-scoring service
+├── frontend/         # Next.js + TypeScript web app (BFF to core-bank)
 ├── infra/
 │   ├── keycloak/     # realm export
 │   ├── postman/      # API collection
@@ -147,7 +169,6 @@ ledger-bank/
 └── Makefile
 ```
 
-Future homes (added with their phases): `frontend/` (Next.js).
 
 ## License
 

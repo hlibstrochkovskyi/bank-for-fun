@@ -77,7 +77,16 @@ is the concurrency money-conservation test — keep it front and center.
 
 ## Current status
 
-Phases 0–3 complete. Phase 3 added: a **Python (FastAPI) fraud-service** (rule-based
+Phases 0–4 complete. Phase 4 added the **`frontend/`** (Next.js 16 + TS + Tailwind
+v4 + shadcn/ui "base-nova"/Base UI, Calm Indigo theme): Keycloak OIDC via Auth.js v5
+as a **BFF** (`/api/bank/*` proxy forwards the server-held token; ADR-0010),
+dashboard (balance-trend chart), transfer flow (idempotent, held-transfer UX),
+account detail/history/statements, held-transfers view. Verified live end-to-end
+(scripted OIDC login → BFF → core-bank). Notes: Next 16 renamed `middleware`→`proxy`;
+shadcn `base-nova` uses Base UI (no `asChild`; use `buttonVariants` on links).
+Run on the host: `cd frontend && npm run dev`. ADRs 0001–0010.
+
+Phases 0–3 (backend) complete. Phase 3 added: a **Python (FastAPI) fraud-service** (rule-based
 scoring) the core calls synchronously; flagged transfers are **held** (not posted),
 visible to the customer, and released/rejected by an admin (`held_transfer`, V6);
 **RabbitMQ** carries domain events (`DomainEventForwarder`, AFTER_COMMIT) to a

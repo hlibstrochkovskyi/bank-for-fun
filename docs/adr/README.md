@@ -17,6 +17,7 @@ Format: [Michael Nygard's ADR template](https://github.com/joelparkerhenderson/a
 | 0006 | [Keycloak (OIDC) over hand-rolled auth](0006-keycloak-auth.md) | Accepted |
 | 0007 | [Fraud engine as a separate Python service](0007-fraud-service-python.md) | Accepted |
 | 0009 | [Distributed tracing via the OpenTelemetry Java agent](0009-tracing-agent.md) | Accepted |
+| 0010 | [A Backend-for-Frontend (BFF) for the web client](0010-frontend-bff.md) | Accepted |
 
 ## Planned
 
