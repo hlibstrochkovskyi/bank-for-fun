@@ -1,0 +1,94 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { useAccount, useTransactions } from "@/lib/queries";
+import { accountMeta } from "@/lib/labels";
+import { formatMoney } from "@/lib/format";
+import { AccountMoneyDialog } from "@/components/account/account-money-dialog";
+import { StatementView } from "@/components/account/statement-view";
+import { TransactionRow } from "@/components/money/transaction-row";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function AccountDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
+  const { data: account, isLoading } = useAccount(id);
+  const { data: txns, isLoading: txLoading } = useTransactions(id, 100);
+
+  if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
+  if (!account)
+    return (
+      <p className="text-sm text-muted-foreground">
+        This account couldn’t be found.
+      </p>
+    );
+
+  const { label, Icon } = accountMeta(account.type);
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Dashboard
+      </Link>
+
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="grid size-12 place-items-center rounded-xl bg-accent text-accent-foreground">
+            <Icon className="size-6" aria-hidden />
+          </span>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {label} · {account.currency}
+            </p>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              {formatMoney(account.balance)}
+            </p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">{account.id}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <AccountMoneyDialog account={account} op="deposit" />
+          <AccountMoneyDialog account={account} op="withdraw" />
+        </div>
+      </div>
+
+      <Tabs defaultValue="activity">
+        <TabsList>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="statement">Statement</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="activity" className="mt-4">
+          <div className="rounded-xl border bg-card px-5 shadow-sm">
+            {txLoading ? (
+              <div className="py-8">
+                <Skeleton className="h-5 w-full" />
+              </div>
+            ) : !txns?.length ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No transactions yet.
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {txns.map((tx) => (
+                  <TransactionRow key={tx.entryId} tx={tx} />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="statement" className="mt-4">
+          <StatementView accountId={id} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
