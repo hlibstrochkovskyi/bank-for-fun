@@ -86,12 +86,16 @@ metrics scraped:
 - **Grafana:** http://localhost:3001 (anonymous admin) — Prometheus, Tempo, Loki provisioned
 - **Prometheus:** http://localhost:9090 — scrapes `core-bank:/actuator/prometheus`
 - **Metrics:** `/actuator/prometheus` (e.g. `ledger_postings_total{type="TRANSFER"}`)
-- **Traces:** wired via OTLP to **Tempo** (Tempo + the OTLP path are verified;
-  live span export from the app on Boot 4.1 is still being finalised).
+- **Traces:** the **OpenTelemetry Java agent** auto-instruments the app and exports
+  OTLP to **Tempo**. A single transfer trace shows the whole flow end-to-end — the
+  `POST /api/transfers` server span over the `SELECT ... FOR UPDATE` balance locks,
+  the `INSERT`s for the posting + both ledger entries, the audit row, and the
+  balance-snapshot `UPDATE`s. See [ADR-0009](docs/adr/0009-tracing-agent.md).
 - **Logs:** the app emits structured (ECS JSON) logs which **promtail** ships to **Loki**.
 
-> Verified live: Prometheus scrapes core-bank, custom `ledger_postings` metrics,
-> ECS JSON logs, and the provisioned Grafana datasources.
+> Verified live: a transfer traced end-to-end in Tempo, Prometheus scraping
+> core-bank, custom `ledger_postings` metrics, ECS JSON logs, and the provisioned
+> Grafana datasources.
 
 ## Project status
 

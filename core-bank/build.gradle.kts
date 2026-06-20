@@ -28,11 +28,12 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 	implementation("org.flywaydb:flyway-database-postgresql")
-	// Observability: Prometheus metrics + OpenTelemetry tracing exported via OTLP.
-	// spring-boot-starter-opentelemetry provides the tracing autoconfiguration,
-	// the OTel SDK, and the OTLP exporter on Boot 4.
+	// Observability: Prometheus metrics (scraped). Distributed tracing is provided by
+	// the OpenTelemetry Java agent at runtime (see core-bank/Dockerfile), which
+	// auto-instruments HTTP/JDBC/etc and exports OTLP to Tempo — sidestepping the
+	// in-process micrometer-tracing bridge, which does not attach its observation
+	// handlers on Spring Boot 4.1 (see docs/adr or the tracing memory note).
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
-	implementation("org.springframework.boot:spring-boot-starter-opentelemetry")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")

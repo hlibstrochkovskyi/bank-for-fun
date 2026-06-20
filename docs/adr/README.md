@@ -15,6 +15,7 @@ Format: [Michael Nygard's ADR template](https://github.com/joelparkerhenderson/a
 | 0004 | [Pessimistic locking + deterministic lock ordering](0004-pessimistic-locking.md) | Accepted |
 | 0005 | [Idempotency for money-moving operations](0005-idempotency-strategy.md) | Accepted |
 | 0006 | [Keycloak (OIDC) over hand-rolled auth](0006-keycloak-auth.md) | Accepted |
+| 0009 | [Distributed tracing via the OpenTelemetry Java agent](0009-tracing-agent.md) | Accepted |
 
 ## Planned
 

@@ -54,7 +54,15 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-ledgerbank}
       REDIS_HOST: redis
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ledger-bank/protocol/openid-connect/certs
-      OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      # Distributed tracing via the OpenTelemetry Java agent -> Tempo (OTLP/HTTP).
+      # Metrics use Prometheus and logs use the console, so disable those exporters.
+      JAVA_TOOL_OPTIONS: -javaagent:/app/opentelemetry-javaagent.jar
+      OTEL_SERVICE_NAME: core-bank
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
       # Emit structured (ECS) JSON logs so Loki/promtail can parse them.
       LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
     ports:
