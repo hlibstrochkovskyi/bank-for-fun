@@ -2,18 +2,47 @@
 
 import {
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { z } from "zod";
 import { api, newIdempotencyKey } from "./api";
 import {
+  type Account,
+  type Transaction,
   accountSchema,
   heldTransferSchema,
   paymentResultSchema,
   statementSchema,
   transactionSchema,
 } from "./schemas";
+
+export type ActivityItem = Transaction & { accountId: string };
+
+/** Merge recent transactions across all of a user's accounts, newest first. */
+export function useRecentActivity(accounts: Account[] | undefined, limit = 25) {
+  const list = accounts ?? [];
+  const results = useQueries({
+    queries: list.map((account) => ({
+      queryKey: ["accounts", account.id, "transactions", limit],
+      queryFn: () =>
+        api.get(
+          `accounts/${account.id}/transactions?limit=${limit}`,
+          z.array(transactionSchema),
+        ),
+    })),
+  });
+
+  const isLoading = results.some((r) => r.isLoading);
+  const transactions: ActivityItem[] = results
+    .flatMap((r, i) =>
+      (r.data ?? []).map((t) => ({ ...t, accountId: list[i].id })),
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  return { transactions, isLoading };
+}
 
 const accountsKey = ["accounts"] as const;
 
