@@ -5,6 +5,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -30,6 +31,7 @@ class RestFraudClient implements FraudClient {
 		try {
 			ScoreResponse response = restClient.post()
 					.uri("/score")
+					.contentType(MediaType.APPLICATION_JSON)
 					.body(Map.of(
 							"amount_minor", request.amountMinor(),
 							"currency", request.currency(),

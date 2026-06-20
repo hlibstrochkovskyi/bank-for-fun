@@ -28,6 +28,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.boot:spring-boot-starter-amqp")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
+	// Gives RestClient a robust Apache HttpClient5 request factory for the
+	// outbound fraud-service call (the JDK HttpClient drops the body under the
+	// OTel agent + virtual threads).
+	implementation("org.apache.httpcomponents.client5:httpclient5")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	// Observability: Prometheus metrics (scraped). Distributed tracing is provided by
