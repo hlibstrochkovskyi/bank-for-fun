@@ -77,14 +77,17 @@ is the concurrency money-conservation test — keep it front and center.
 
 ## Current status
 
-Phases 0 and 1 complete. Phase 1 delivered: Keycloak/OIDC auth (resource server),
-accounts, the double-entry ledger with a DB-enforced balance invariant, idempotent
-deposit + transfer, transaction history, the money-conservation concurrency test,
-the REST API (`web` package) with RFC 7807 errors, Swagger UI, and a seed
-script + Postman collection. ADRs 0001–0006 are written.
+Phases 0, 1, and 2 complete. Phase 2 added: withdrawals; reversals as compensating
+postings (admin-gated, never edits); append-only audit log (DB trigger forbids
+update/delete, driven by domain events); date-range statements; scheduled standing
+orders; Redis rate limiting on money endpoints; and observability (Micrometer/
+Prometheus metrics, OTLP tracing → Tempo, ECS structured logs → Loki, Grafana).
+ADRs 0001–0006 written.
 
-Module packages under `com.ledgerbank`: `accounts`, `ledger`, `payments`, `web`
-(controllers/DTOs), `config` (security, OpenAPI), `shared` (Money, common kernel).
+Module packages under `com.ledgerbank`: `accounts`, `ledger`, `payments`,
+`statements`, `standingorders`, `audit`, `ratelimit`, `web` (controllers/DTOs),
+`config` (security, OpenAPI, scheduling, web/rate-limit), `shared` (Money, events,
+common kernel).
 
-Next: Phase 2 — withdrawals, reversals as compensating postings, statements, rate
-limiting, observability (Actuator/Prometheus/Grafana/tracing), and an audit log.
+Next: Phase 3 — Python fraud/risk service (FastAPI) + RabbitMQ async events +
+notifications worker (Mailhog).
