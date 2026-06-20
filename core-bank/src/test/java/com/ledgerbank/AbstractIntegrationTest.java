@@ -13,6 +13,9 @@ import org.springframework.test.context.TestPropertySource;
  */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
-@TestPropertySource(properties = "ledgerbank.scheduler.enabled=false")
+@TestPropertySource(properties = {
+		"ledgerbank.scheduler.enabled=false",
+		"management.tracing.enabled=false"
+})
 public abstract class AbstractIntegrationTest {
 }

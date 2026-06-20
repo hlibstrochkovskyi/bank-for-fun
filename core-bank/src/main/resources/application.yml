@@ -48,7 +48,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       probes:
@@ -61,6 +61,15 @@ management:
       enabled: true
     os:
       enabled: true
+  metrics:
+    tags:
+      application: core-bank
+  tracing:
+    sampling:
+      probability: 1.0     # sample everything in dev
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
 
 info:
   app:

@@ -32,13 +32,16 @@ public class LedgerService {
 	private final PostingRepository postings;
 	private final LedgerEntryRepository entries;
 	private final org.springframework.context.ApplicationEventPublisher events;
+	private final io.micrometer.core.instrument.MeterRegistry meters;
 
 	public LedgerService(AccountBalanceRepository balances, PostingRepository postings,
-			LedgerEntryRepository entries, org.springframework.context.ApplicationEventPublisher events) {
+			LedgerEntryRepository entries, org.springframework.context.ApplicationEventPublisher events,
+			io.micrometer.core.instrument.MeterRegistry meters) {
 		this.balances = balances;
 		this.postings = postings;
 		this.entries = entries;
 		this.events = events;
+		this.meters = meters;
 	}
 
 	/** Initialise an account's balance snapshot at zero. {@code minBalance == null} = unbounded. */
@@ -130,6 +133,7 @@ public class LedgerService {
 					leg.amount().currency().getCurrencyCode()));
 		}
 		deltas.forEach((accountId, delta) -> locked.get(accountId).apply(delta));
+		meters.counter("ledger.postings", "type", type.name()).increment();
 		events.publishEvent(new MoneyPostedEvent(posting.id(), type.name(), description));
 		return posting;
 	}

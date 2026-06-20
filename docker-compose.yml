@@ -54,6 +54,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-ledgerbank}
       REDIS_HOST: redis
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ledger-bank/protocol/openid-connect/certs
+      OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+      # Emit structured (ECS) JSON logs so Loki/promtail can parse them.
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
     ports:
       - "${APP_PORT:-8080}:8080"
     depends_on:
@@ -62,6 +65,8 @@ services:
       redis:
         condition: service_healthy
       keycloak:
+        condition: service_started
+      tempo:
         condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
@@ -83,5 +88,58 @@ services:
     depends_on:
       - postgres
 
+  # --- Observability (LGTM stack) ----------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./infra/observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempodata:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo API
+      - "4318"        # OTLP HTTP (in-network)
+
+  loki:
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ./infra/observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - lokidata:/loki
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:latest
+    command: ["-config.file=/etc/promtail/promtail-config.yml"]
+    volumes:
+      - ./infra/observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+
 volumes:
   pgdata:
+  tempodata:
+  lokidata:

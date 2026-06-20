@@ -37,8 +37,10 @@ See [ADR-0001](docs/adr/0001-modular-monolith.md) for why a monolith.
 | Persistence | PostgreSQL, Spring Data JPA / Hibernate, Flyway     |
 | Auth        | Keycloak (OIDC); app is an OAuth2 resource server   |
 | API docs    | springdoc-openapi (Swagger UI), RFC 7807 errors     |
+| Cache/limit | Redis (rate limiting)                               |
+| Observability | Micrometer/Prometheus, OpenTelemetry → Tempo, Loki, Grafana |
 | Build       | Gradle (Kotlin DSL), wrapper-pinned                 |
-| Testing     | JUnit 5, Testcontainers (real Postgres)             |
+| Testing     | JUnit 5, Testcontainers (real Postgres + Redis)     |
 | Local infra | Docker Compose                                      |
 
 ## Quickstart
@@ -76,6 +78,17 @@ password `password`). Once `make up` is healthy:
 All `/api/**` endpoints require a Keycloak bearer token; a user can only access
 their own accounts, and money endpoints require an `Idempotency-Key` header.
 
+### Observability
+
+`make up` also starts the LGTM stack. A transfer is traced end-to-end and its
+metrics scraped:
+
+- **Grafana:** http://localhost:3001 (anonymous admin) — Prometheus, Tempo, Loki provisioned
+- **Prometheus:** http://localhost:9090 — scrapes `core-bank:/actuator/prometheus`
+- **Metrics:** `/actuator/prometheus` (e.g. `ledger_postings_total{type="TRANSFER"}`)
+- **Traces:** exported via OTLP to **Tempo**; **Loki** ingests the app's structured
+  (ECS JSON) logs via promtail.
+
 ## Project status
 
 Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
@@ -87,7 +100,9 @@ Following a phased roadmap (see [the implementation plan](docs/plan/)). **Keep
   double-entry ledger (DB-enforced balance invariant), deposit + transfer,
   derived balances, idempotency, transaction history, the concurrency invariant
   test, REST API with RFC 7807 errors, Swagger UI, seed script + Postman.
-- [ ] Phase 2 — Harden & expand (reversals, statements, rate limiting, observability, audit).
+- [x] **Phase 2 — Harden & expand:** withdrawals, reversals (compensating postings,
+  admin-gated), append-only audit log, date-range statements, scheduled standing
+  orders, Redis rate limiting, and full observability (metrics, tracing, structured logs).
 - [ ] Phase 3 — Polyglot fraud engine + async messaging.
 - [ ] Phase 4 — Next.js frontend.
 - [ ] Phase 5 — DevOps & quality polish.
