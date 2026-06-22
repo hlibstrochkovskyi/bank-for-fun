@@ -47,7 +47,7 @@ export default function AccountDetailPage() {
             <p className="text-sm text-muted-foreground">
               {label} · {account.currency}
             </p>
-            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+            <p className="font-display text-4xl font-medium tracking-tight tabular-nums">
               {formatMoney(account.balance)}
             </p>
             <p className="mt-1 font-mono text-xs text-muted-foreground">{account.id}</p>

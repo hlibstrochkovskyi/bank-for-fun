@@ -8,29 +8,27 @@ export function TransactionRow({ tx }: { tx: Transaction }) {
   const isCredit = tx.amount.minorUnits > 0;
 
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="flex items-center gap-3 py-3.5">
       <span
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-full",
+          "grid size-9 shrink-0 place-items-center rounded-md border",
           isCredit
-            ? "bg-emerald-50 text-emerald-600"
-            : "bg-secondary text-muted-foreground",
+            ? "border-transparent bg-accent text-accent-foreground"
+            : "border-border bg-secondary text-muted-foreground",
         )}
       >
         <Icon className="size-4" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {tx.description || label}
-        </p>
+        <p className="truncate text-sm font-medium">{tx.description || label}</p>
         <p className="truncate text-xs text-muted-foreground">
           {label} · {formatDateTime(tx.createdAt)}
         </p>
       </div>
       <span
         className={cn(
-          "shrink-0 text-sm font-semibold tabular-nums",
-          isCredit ? "text-emerald-600" : "text-foreground",
+          "shrink-0 font-mono text-sm font-medium tabular-nums",
+          isCredit ? "text-positive" : "text-foreground",
         )}
       >
         {formatSignedMoney(tx.amount)}

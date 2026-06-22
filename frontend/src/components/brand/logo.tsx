@@ -1,4 +1,3 @@
-import { Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Logo({
@@ -10,12 +9,20 @@ export function Logo({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-        <Landmark className="size-[18px]" aria-hidden />
+      <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
+        {/* Ledger rules + a balanced baseline. */}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path
+            d="M3 4h10M3 7.5h6M3 11.5h10"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
       </span>
       {showWordmark && (
-        <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          ledger<span className="text-primary">bank</span>
+        <span className="font-display text-[20px] font-medium leading-none tracking-tight text-foreground">
+          Ledger
         </span>
       )}
     </span>

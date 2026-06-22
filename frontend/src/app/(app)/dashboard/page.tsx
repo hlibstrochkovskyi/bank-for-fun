@@ -57,9 +57,11 @@ export default function DashboardPage() {
         <EmptyAccounts />
       ) : (
         <>
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <p className="text-sm text-muted-foreground">Total balance</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
+          <div className="rounded-xl border border-border bg-card p-6">
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              Total balance
+            </p>
+            <p className="mt-2 font-display text-5xl font-medium tracking-tight tabular-nums">
               {formatMoney(total)}
             </p>
             <div className="mt-5">

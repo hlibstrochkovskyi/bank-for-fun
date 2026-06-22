@@ -91,8 +91,8 @@ function Stat({
       <p className="text-xs text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "mt-1 text-lg font-semibold tabular-nums",
-          tone === "positive" && "text-emerald-600",
+          "mt-1 font-mono text-lg font-medium tabular-nums",
+          tone === "positive" && "text-positive",
         )}
       >
         {value}

@@ -38,13 +38,16 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3",
+                      "relative px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3",
                       active
-                        ? "bg-secondary text-foreground"
-                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {item.label}
+                    {active && (
+                      <span className="absolute inset-x-2.5 -bottom-[13px] h-0.5 rounded-full bg-primary sm:inset-x-3" />
+                    )}
                   </Link>
                 );
               })}

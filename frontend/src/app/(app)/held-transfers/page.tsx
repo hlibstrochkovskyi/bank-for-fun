@@ -8,8 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING_REVIEW: "border-amber-200 bg-amber-50 text-amber-700",
-  RELEASED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  PENDING_REVIEW: "border-amber-300/60 bg-amber-50 text-amber-800",
+  RELEASED: "border-primary/20 bg-accent text-accent-foreground",
   REJECTED: "border-border bg-secondary text-muted-foreground",
 };
 
@@ -45,10 +45,12 @@ export default function HeldTransfersPage() {
 
 function HeldRow({ held }: { held: HeldTransfer }) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xl font-semibold tabular-nums">{formatMoney(held.amount)}</p>
+          <p className="font-display text-2xl font-medium tabular-nums">
+            {formatMoney(held.amount)}
+          </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {formatDateTime(held.createdAt)}
           </p>
@@ -78,7 +80,7 @@ function HeldRow({ held }: { held: HeldTransfer }) {
 function EmptyHeld() {
   return (
     <div className="grid place-items-center rounded-2xl border border-dashed bg-card/50 px-6 py-20 text-center">
-      <span className="grid size-12 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+      <span className="grid size-12 place-items-center rounded-xl bg-accent text-accent-foreground">
         <ShieldCheck className="size-6" aria-hidden />
       </span>
       <h2 className="mt-5 text-lg font-semibold">Nothing held</h2>
