@@ -28,7 +28,10 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       error: undefined,
     };
   } catch {
-    return { ...token, error: "RefreshAccessTokenError" };
+    // Refresh failed (e.g. the IdP session is gone). Drop the token so the BFF
+    // returns 401 and the client re-authenticates cleanly, rather than forwarding
+    // a stale token.
+    return { ...token, accessToken: undefined, error: "RefreshAccessTokenError" };
   }
 }
 

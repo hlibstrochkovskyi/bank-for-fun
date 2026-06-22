@@ -4,7 +4,9 @@
   "sslRequired": "none",
   "registrationAllowed": true,
   "loginWithEmailAllowed": true,
-  "accessTokenLifespan": 900,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 36000,
   "roles": {
     "realm": [
       { "name": "admin", "description": "ledger-bank administrator (may reverse postings)" }

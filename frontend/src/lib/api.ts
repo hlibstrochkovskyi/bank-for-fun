@@ -22,6 +22,14 @@ async function request<T>(
     headers: { "content-type": "application/json", ...init?.headers },
   });
 
+  // A dead/expired session: re-authenticate cleanly instead of showing an error.
+  if (response.status === 401 && typeof window !== "undefined") {
+    window.location.assign(
+      `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`,
+    );
+    throw new ApiError(401, "Your session expired. Redirecting to sign in…");
+  }
+
   const text = await response.text();
   const json = text ? JSON.parse(text) : null;
 
