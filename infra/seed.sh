@@ -19,6 +19,10 @@ CLIENT_ID="${CLIENT_ID:-ledger-bank-web}"
 USERNAME="${USERNAME:-alice}"
 PASSWORD="${PASSWORD:-password}"
 FORCE="${FORCE:-0}"
+# For the (optional) history-backdating step, applied via the Postgres container.
+PG_CONTAINER="${PG_CONTAINER:-ledger-bank-postgres-1}"
+DB_NAME="${DB_NAME:-ledgerbank}"
+DB_USERNAME="${DB_USERNAME:-ledgerbank}"
 
 json_field() { python3 -c "import sys,json; print(json.load(sys.stdin)['$1'])"; }
 count_json() { python3 -c "import sys,json; print(len(json.load(sys.stdin)))"; }
@@ -66,21 +70,27 @@ SAVINGS=$(open_account SAVINGS "Emergency Fund")
 echo "   checking=$CHECKING"
 echo "   savings =$SAVINGS"
 
-echo "→ Posting income…"
-deposit "$CHECKING" "5200.00" "Salary — Atlas Studio"
-deposit "$CHECKING" "39.90"   "Refund — Uniqlo"
+# Posted in chronological order; the backdating step below spreads these across the
+# last ~30 days (oldest first), so salary lands early and spending follows.
+echo "→ Posting a month of activity…"
+deposit  "$CHECKING"            "5200.00" "Salary — Atlas Studio"
+withdraw "$CHECKING"            "1850.00" "Rent — Oak Property"
+transfer "$CHECKING" "$SAVINGS"  "500.00" "Transfer to savings"
+withdraw "$CHECKING"              "94.30" "Con Edison"
+withdraw "$CHECKING"              "86.24" "Whole Foods Market"
+transfer "$CHECKING" "$SAVINGS"  "340.00" "Round-ups"
+withdraw "$CHECKING"              "11.99" "Spotify"
+withdraw "$CHECKING"               "6.50" "Blue Bottle Coffee"
+withdraw "$CHECKING"               "2.75" "Metro Transit"
+deposit  "$CHECKING"              "39.90" "Refund — Uniqlo"
 
-echo "→ Posting everyday spending…"
-withdraw "$CHECKING" "1850.00" "Rent — Oak Property"
-withdraw "$CHECKING" "94.30"   "Con Edison"
-withdraw "$CHECKING" "86.24"   "Whole Foods Market"
-withdraw "$CHECKING" "11.99"   "Spotify"
-withdraw "$CHECKING" "6.50"    "Blue Bottle Coffee"
-withdraw "$CHECKING" "2.75"    "Metro Transit"
-
-echo "→ Moving money to savings…"
-transfer "$CHECKING" "$SAVINGS" "500.00" "Transfer to savings"
-transfer "$CHECKING" "$SAVINGS" "340.00" "Round-ups"
+# Backdate the demo history (timestamps only) so the balance trend looks alive.
+if [[ "${BACKDATE:-1}" == "1" ]] && command -v docker >/dev/null \
+   && docker ps --format '{{.Names}}' | grep -q "^${PG_CONTAINER}$"; then
+  echo "→ Backdating demo history across the last 30 days…"
+  docker exec -i "$PG_CONTAINER" psql -U "$DB_USERNAME" -d "$DB_NAME" -q -v ON_ERROR_STOP=1 \
+    < "$(dirname "$0")/seed-history.sql" >/dev/null
+fi
 
 echo "→ Accounts for '$USERNAME':"
 curl -fsS "${auth[@]}" "$BASE_URL/api/accounts" | python3 -m json.tool
