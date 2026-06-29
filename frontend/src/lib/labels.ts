@@ -9,6 +9,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/** Display name for an account: its nickname, or the type label as a fallback. */
+export function accountName(account: { nickname?: string | null; type: string }): string {
+  return account.nickname?.trim() || accountMeta(account.type).label;
+}
+
 export function accountMeta(type: string): { label: string; Icon: LucideIcon } {
   switch (type) {
     case "CHECKING":

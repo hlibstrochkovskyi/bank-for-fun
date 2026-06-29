@@ -10,6 +10,8 @@ export type Money = z.infer<typeof moneySchema>;
 export const accountSchema = z.object({
   id: z.string(),
   type: z.string(),
+  nickname: z.string().nullable().optional(),
+  accountNumber: z.string().nullable().optional(),
   currency: z.string(),
   status: z.string(),
   balance: moneySchema,

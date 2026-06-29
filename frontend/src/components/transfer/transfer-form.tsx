@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ArrowRight, ShieldAlert } from "lucide-react";
 import { useAccounts, useTransfer } from "@/lib/queries";
-import { accountMeta } from "@/lib/labels";
-import { formatMoney } from "@/lib/format";
+import { accountName } from "@/lib/labels";
+import { formatMoney, maskAccountNumber } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ export function TransferForm() {
   const { data: accounts } = useAccounts();
   const transfer = useTransfer();
   const [held, setHeld] = useState(false);
+  const [manualTo, setManualTo] = useState(false);
 
   const {
     register,
@@ -58,8 +59,18 @@ export function TransferForm() {
 
   const fromId = watch("fromAccountId");
   const toId = watch("toAccountId");
+  const amount = watch("amount");
   const fromAccount = accounts?.find((a) => a.id === fromId);
   const others = (accounts ?? []).filter((a) => a.id !== fromId);
+
+  const amountMinor = /^\d+(\.\d{1,2})?$/.test(amount ?? "")
+    ? Math.round(Number(amount) * 100)
+    : 0;
+  const balanceAfter =
+    fromAccount && amountMinor > 0
+      ? { ...fromAccount.balance, minorUnits: fromAccount.balance.minorUnits - amountMinor }
+      : null;
+  const insufficient = balanceAfter ? balanceAfter.minorUnits < 0 : false;
 
   function onSubmit(values: FormValues) {
     setHeld(false);
@@ -100,7 +111,15 @@ export function TransferForm() {
           <SelectContent>
             {(accounts ?? []).map((a) => (
               <SelectItem key={a.id} value={a.id}>
-                {accountMeta(a.type).label} · {formatMoney(a.balance)}
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span className="truncate">
+                    {accountName(a)}
+                    <span className="ml-1 font-mono text-xs text-muted-foreground">
+                      {maskAccountNumber(a.accountNumber)}
+                    </span>
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">{formatMoney(a.balance)}</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -109,30 +128,50 @@ export function TransferForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="to">To</Label>
-        <Input
-          id="to"
-          placeholder="Recipient account ID"
-          {...register("toAccountId")}
-          autoComplete="off"
-        />
-        {others.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-0.5">
-            <span className="text-xs text-muted-foreground">Your accounts:</span>
-            {others.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setValue("toAccountId", a.id, { shouldValidate: true })}
-                className={cn(
-                  "rounded-full border px-2.5 py-0.5 text-xs transition-colors hover:bg-secondary",
-                  toId === a.id && "border-primary bg-accent text-accent-foreground",
-                )}
-              >
-                {accountMeta(a.type).label}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="to">To</Label>
+          <button
+            type="button"
+            onClick={() => {
+              setManualTo((m) => !m);
+              setValue("toAccountId", "", { shouldValidate: false });
+            }}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {manualTo ? "Choose my account" : "Use an account ID"}
+          </button>
+        </div>
+        {manualTo ? (
+          <Input
+            id="to"
+            placeholder="Recipient account ID"
+            {...register("toAccountId")}
+            autoComplete="off"
+          />
+        ) : (
+          <Select
+            value={toId}
+            onValueChange={(v) => setValue("toAccountId", v ?? "", { shouldValidate: true })}
+          >
+            <SelectTrigger id="to" className="w-full">
+              <SelectValue placeholder={others.length ? "Select an account" : "No other accounts"} />
+            </SelectTrigger>
+            <SelectContent>
+              {others.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  <span className="flex w-full items-center justify-between gap-3">
+                    <span className="truncate">
+                      {accountName(a)}
+                      <span className="ml-1 font-mono text-xs text-muted-foreground">
+                        {maskAccountNumber(a.accountNumber)}
+                      </span>
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">{formatMoney(a.balance)}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
         <FieldError message={errors.toAccountId?.message} />
       </div>
@@ -146,6 +185,13 @@ export function TransferForm() {
           <Input id="amount" inputMode="decimal" placeholder="0.00" className="pl-7" {...register("amount")} />
         </div>
         <FieldError message={errors.amount?.message} />
+        {balanceAfter && (
+          <p className={cn("text-xs", insufficient ? "text-destructive" : "text-muted-foreground")}>
+            {insufficient
+              ? "Not enough funds in this account."
+              : `Balance after: ${formatMoney(balanceAfter)}`}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -154,7 +200,7 @@ export function TransferForm() {
       </div>
 
       {held && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="flex items-start gap-3 rounded-lg border border-gold/40 bg-gold/10 p-3 text-sm text-gold">
           <ShieldAlert className="mt-0.5 size-4 shrink-0" />
           <div>
             This transfer was flagged and is{" "}
@@ -167,7 +213,7 @@ export function TransferForm() {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={transfer.isPending}>
+      <Button type="submit" className="w-full" disabled={transfer.isPending || insufficient}>
         {transfer.isPending ? "Sending…" : "Send transfer"}
         {!transfer.isPending && <ArrowRight className="size-4" />}
       </Button>
