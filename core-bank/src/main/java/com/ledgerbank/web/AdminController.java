@@ -6,8 +6,10 @@ import com.ledgerbank.payments.PaymentStatus;
 import com.ledgerbank.payments.PaymentsService;
 import com.ledgerbank.payments.ReverseCommand;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +40,11 @@ public class AdminController {
 		PaymentResult result = payments.reverse(
 				new ReverseCommand(request.postingId(), idempotencyKey, request.reason()));
 		return PaymentResponse.from(result, null);
+	}
+
+	@GetMapping("/held-transfers")
+	public List<AdminHeldTransferResponse> queue() {
+		return heldTransfers.listAll().stream().map(AdminHeldTransferResponse::from).toList();
 	}
 
 	@PostMapping("/held-transfers/{id}/release")

@@ -6,21 +6,20 @@ import java.time.OffsetDateTime;
 import java.util.Currency;
 import java.util.UUID;
 
-/**
- * A customer's view of their own held transfer. Deliberately omits the internal
- * risk score and rule reasons — those belong to the admin review console only.
- */
-public record HeldTransferResponse(
+/** The admin review view of a held transfer — includes the risk score and reasons. */
+public record AdminHeldTransferResponse(
 		UUID id,
 		UUID fromAccountId,
 		UUID toAccountId,
 		MoneyView amount,
+		double riskScore,
+		String reason,
 		String status,
 		OffsetDateTime createdAt) {
 
-	public static HeldTransferResponse from(HeldTransfer h) {
-		return new HeldTransferResponse(h.id(), h.fromAccountId(), h.toAccountId(),
+	public static AdminHeldTransferResponse from(HeldTransfer h) {
+		return new AdminHeldTransferResponse(h.id(), h.fromAccountId(), h.toAccountId(),
 				MoneyView.from(Money.of(h.amount(), Currency.getInstance(h.currency()))),
-				h.status().name(), h.createdAt());
+				h.riskScore(), h.reason(), h.status().name(), h.createdAt());
 	}
 }

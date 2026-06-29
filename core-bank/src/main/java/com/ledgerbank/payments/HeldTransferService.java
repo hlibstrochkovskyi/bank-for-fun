@@ -13,6 +13,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +55,12 @@ public class HeldTransferService {
 	@Transactional(readOnly = true)
 	public List<HeldTransfer> listForOwner(UUID ownerId) {
 		return heldTransfers.findByOwnerIdOrderByCreatedAtDesc(ownerId);
+	}
+
+	/** Every held transfer, newest first — the admin review queue. */
+	@Transactional(readOnly = true)
+	public List<HeldTransfer> listAll() {
+		return heldTransfers.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 	}
 
 	/** Release a held transfer: post it to the ledger. Returns the posting id. */
