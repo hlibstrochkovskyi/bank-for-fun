@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, ShieldAlert } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useHeldTransfers } from "@/lib/queries";
 import { formatMoney, formatDateTime, humanize } from "@/lib/format";
 import type { HeldTransfer } from "@/lib/schemas";
@@ -11,6 +11,13 @@ const STATUS_STYLES: Record<string, string> = {
   PENDING_REVIEW: "border-gold/40 bg-gold/10 text-gold",
   RELEASED: "border-positive/30 bg-positive/10 text-positive",
   REJECTED: "border-border bg-secondary text-muted-foreground",
+};
+
+const STATUS_COPY: Record<string, string> = {
+  PENDING_REVIEW:
+    "We’re reviewing this transfer for your security — the money hasn’t moved yet.",
+  RELEASED: "Reviewed and completed — the money has moved.",
+  REJECTED: "This transfer was cancelled after review. No money moved.",
 };
 
 export default function HeldTransfersPage() {
@@ -65,15 +72,9 @@ function HeldRow({ held }: { held: HeldTransfer }) {
           {humanize(held.status)}
         </span>
       </div>
-      {held.reason && (
-        <p className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-gold" />
-          {held.reason}
-          <span className="text-muted-foreground/70">
-            · risk {Math.round(held.riskScore * 100)}%
-          </span>
-        </p>
-      )}
+      <p className="mt-3 text-sm text-muted-foreground">
+        {STATUS_COPY[held.status] ?? STATUS_COPY.PENDING_REVIEW}
+      </p>
     </div>
   );
 }

@@ -39,9 +39,26 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/accounts",
   "/transfers",
+  "/transactions",
+  "/cards",
   "/statements",
   "/held-transfers",
+  "/admin",
 ];
+
+/** Pull the Keycloak realm roles out of an access token (no verification needed —
+ *  it came straight from the IdP at sign-in). */
+function realmRoles(accessToken?: string): string[] {
+  if (!accessToken) return [];
+  try {
+    const payload = JSON.parse(
+      Buffer.from(accessToken.split(".")[1], "base64").toString("utf8"),
+    );
+    return payload?.realm_access?.roles ?? [];
+  } catch {
+    return [];
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -70,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           expiresAt: account.expires_at,
           name: (profile?.name as string) ?? token.name,
           email: (profile?.email as string) ?? token.email,
+          roles: realmRoles(account.access_token),
         };
       }
       // Still valid (with a 30s safety margin)?
@@ -81,6 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.error = token.error;
+      session.roles = token.roles ?? [];
       return session;
     },
   },

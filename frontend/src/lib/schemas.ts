@@ -43,17 +43,23 @@ export const cardSchema = z.object({
 });
 export type Card = z.infer<typeof cardSchema>;
 
+// Customer view — no internal risk score or rule reasons.
 export const heldTransferSchema = z.object({
   id: z.string(),
   fromAccountId: z.string(),
   toAccountId: z.string(),
   amount: moneySchema,
-  riskScore: z.number(),
-  reason: z.string().nullable(),
   status: z.string(),
   createdAt: z.string(),
 });
 export type HeldTransfer = z.infer<typeof heldTransferSchema>;
+
+// Admin review view — includes the risk score and reasons.
+export const adminHeldTransferSchema = heldTransferSchema.extend({
+  riskScore: z.number(),
+  reason: z.string().nullable(),
+});
+export type AdminHeldTransfer = z.infer<typeof adminHeldTransferSchema>;
 
 export const paymentResultSchema = z.object({
   status: z.string(),

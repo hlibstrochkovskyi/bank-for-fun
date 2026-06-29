@@ -2,27 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, CreditCard, Receipt, ShieldAlert } from "lucide-react";
+import { useSession } from "next-auth/react";
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  CreditCard,
+  Receipt,
+  ShieldAlert,
+  ShieldHalf,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { UserMenu } from "./user-menu";
 import { cn } from "@/lib/utils";
 
-const nav: { href: string; label: string; icon: LucideIcon }[] = [
+type NavItem = { href: string; label: string; icon: LucideIcon; admin?: boolean };
+
+const nav: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: Receipt },
   { href: "/cards", label: "Cards", icon: CreditCard },
   { href: "/transfers", label: "Transfer", icon: ArrowLeftRight },
   { href: "/held-transfers", label: "Held", icon: ShieldAlert },
+  { href: "/admin", label: "Review queue", icon: ShieldHalf, admin: true },
 ];
 
 function useNavItems() {
   const pathname = usePathname();
-  return nav.map((item) => ({
-    ...item,
-    active:
-      pathname === item.href || pathname.startsWith(`${item.href}/`),
-  }));
+  const { data: session } = useSession();
+  const isAdmin = session?.roles?.includes("admin") ?? false;
+  return nav
+    .filter((item) => !item.admin || isAdmin)
+    .map((item) => ({
+      ...item,
+      active: pathname === item.href || pathname.startsWith(`${item.href}/`),
+    }));
 }
 
 export function AppShell({

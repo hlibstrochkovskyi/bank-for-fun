@@ -12,6 +12,7 @@ import {
   type Account,
   type Transaction,
   accountSchema,
+  adminHeldTransferSchema,
   cardSchema,
   heldTransferSchema,
   paymentResultSchema,
@@ -107,6 +108,27 @@ export function useHeldTransfers() {
   return useQuery({
     queryKey: ["held-transfers"],
     queryFn: () => api.get("held-transfers", z.array(heldTransferSchema)),
+  });
+}
+
+const adminQueueKey = ["admin", "held-transfers"] as const;
+
+export function useAdminHeldTransfers() {
+  return useQuery({
+    queryKey: adminQueueKey,
+    queryFn: () => api.get("admin/held-transfers", z.array(adminHeldTransferSchema)),
+  });
+}
+
+export function useReviewHeld() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; action: "release" | "reject" }) =>
+      api.post(`admin/held-transfers/${input.id}/${input.action}`, z.unknown(), {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminQueueKey });
+      invalidateMoney(qc);
+    },
   });
 }
 
