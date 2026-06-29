@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -29,16 +30,18 @@ import { cn } from "@/lib/utils";
 export function OpenAccountDialog({ variant = "default" }: { variant?: "default" | "ghost" }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState("CHECKING");
+  const [nickname, setNickname] = useState("");
   const openAccount = useOpenAccount();
 
   function submit() {
     openAccount.mutate(
-      { type, currency: "USD" },
+      { type, currency: "USD", nickname: nickname.trim() || undefined },
       {
         onSuccess: (account) => {
           toast.success(`${accountMeta(account.type).label} account opened`);
           setOpen(false);
           setType("CHECKING");
+          setNickname("");
         },
         onError: (e) => toast.error(e.message || "Couldn’t open the account"),
       },
@@ -72,6 +75,17 @@ export function OpenAccountDialog({ variant = "default" }: { variant?: "default"
               <SelectItem value="SAVINGS">Savings</SelectItem>
             </SelectContent>
           </Select>
+
+          <Label htmlFor="account-nickname" className="mt-2">
+            Nickname <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="account-nickname"
+            placeholder="e.g. Travel Fund"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={40}
+          />
         </div>
 
         <DialogFooter>

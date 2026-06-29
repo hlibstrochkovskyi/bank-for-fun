@@ -18,26 +18,43 @@ function currency(value: number) {
   }).format(value);
 }
 
-export function BalanceTrendChart({ data }: { data: TrendPoint[] }) {
+export function BalanceTrendChart({
+  data,
+  variant = "light",
+  height = 200,
+  showAxis = true,
+}: {
+  data: TrendPoint[];
+  variant?: "light" | "onDark";
+  height?: number;
+  showAxis?: boolean;
+}) {
+  const onDark = variant === "onDark";
+  const stroke = onDark ? "var(--color-gold)" : "var(--color-chart-1)";
+  const tick = onDark ? "oklch(0.82 0.02 90 / 0.7)" : "var(--color-muted-foreground)";
+  const gradId = onDark ? "balanceFillDark" : "balanceFill";
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
         <defs>
-          <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity={0.28} />
-            <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity={onDark ? 0.35 : 0.28} />
+            <stop offset="100%" stopColor={stroke} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <XAxis
-          dataKey="label"
-          tickLine={false}
-          axisLine={false}
-          minTickGap={40}
-          tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-        />
+        {showAxis && (
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            minTickGap={40}
+            tick={{ fontSize: 11, fill: tick }}
+          />
+        )}
         <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
         <Tooltip
-          cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }}
+          cursor={{ stroke: onDark ? "oklch(1 0 0 / 0.2)" : "var(--color-border)", strokeWidth: 1 }}
           contentStyle={{
             borderRadius: 12,
             border: "1px solid var(--color-border)",
@@ -52,9 +69,9 @@ export function BalanceTrendChart({ data }: { data: TrendPoint[] }) {
         <Area
           type="monotone"
           dataKey="value"
-          stroke="var(--color-chart-1)"
+          stroke={stroke}
           strokeWidth={2}
-          fill="url(#balanceFill)"
+          fill={`url(#${gradId})`}
           dot={false}
           activeDot={{ r: 4, strokeWidth: 0 }}
         />

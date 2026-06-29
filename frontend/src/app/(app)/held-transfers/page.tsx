@@ -8,8 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING_REVIEW: "border-amber-300/60 bg-amber-50 text-amber-800",
-  RELEASED: "border-primary/20 bg-accent text-accent-foreground",
+  PENDING_REVIEW: "border-gold/40 bg-gold/10 text-gold",
+  RELEASED: "border-positive/30 bg-positive/10 text-positive",
   REJECTED: "border-border bg-secondary text-muted-foreground",
 };
 
@@ -19,8 +19,9 @@ export default function HeldTransfersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Held transfers</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="eyebrow">Fraud review</p>
+        <h1 className="mt-1.5 text-3xl tracking-tight">Held transfers</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Transfers our fraud checks paused for a quick review.
         </p>
       </div>
@@ -66,7 +67,7 @@ function HeldRow({ held }: { held: HeldTransfer }) {
       </div>
       {held.reason && (
         <p className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
+          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-gold" />
           {held.reason}
           <span className="text-muted-foreground/70">
             · risk {Math.round(held.riskScore * 100)}%

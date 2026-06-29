@@ -101,7 +101,7 @@ function invalidateMoney(qc: ReturnType<typeof useQueryClient>) {
 export function useOpenAccount() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { type: string; currency: string }) =>
+    mutationFn: (input: { type: string; currency: string; nickname?: string }) =>
       api.post("accounts", accountSchema, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: accountsKey }),
   });

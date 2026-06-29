@@ -38,16 +38,16 @@ export default function AccountDetailPage() {
         Dashboard
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border bg-card p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)] sm:p-8">
         <div className="flex items-center gap-4">
           <span className="grid size-12 place-items-center rounded-xl bg-accent text-accent-foreground">
             <Icon className="size-6" aria-hidden />
           </span>
           <div>
-            <p className="text-sm text-muted-foreground">
+            <p className="eyebrow">
               {label} · {account.currency}
             </p>
-            <p className="font-display text-4xl font-medium tracking-tight tabular-nums">
+            <p className="mt-1.5 font-display text-4xl tracking-tight tabular-nums">
               {formatMoney(account.balance)}
             </p>
             <p className="mt-1 font-mono text-xs text-muted-foreground">{account.id}</p>
