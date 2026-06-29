@@ -44,6 +44,17 @@ export const cardSchema = z.object({
 export type Card = z.infer<typeof cardSchema>;
 
 // Customer view — no internal risk score or rule reasons.
+export const goalSchema = z.object({
+  id: z.string(),
+  accountId: z.string(),
+  accountNickname: z.string().nullable().optional(),
+  name: z.string(),
+  target: moneySchema,
+  saved: moneySchema,
+  pct: z.number(),
+});
+export type Goal = z.infer<typeof goalSchema>;
+
 export const heldTransferSchema = z.object({
   id: z.string(),
   fromAccountId: z.string(),

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ArrowLeftRight, Sparkles, Wallet } from "lucide-react";
-import { useAccounts, useCards, useRecentActivity } from "@/lib/queries";
+import { useAccounts, useCards, useGoals, useRecentActivity } from "@/lib/queries";
 import { spendingByCategory } from "@/lib/insights";
 import { formatMoney } from "@/lib/format";
 import { categoryLabel } from "@/lib/labels";
 import { HeroBalance } from "@/components/dashboard/hero-balance";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { CardVisual } from "@/components/cards/card-visual";
+import { GoalRing } from "@/components/goals/goal-ring";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { AccountCard } from "@/components/dashboard/account-card";
 import { OpenAccountDialog } from "@/components/dashboard/open-account-dialog";
@@ -22,8 +23,10 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const { data: accounts, isLoading } = useAccounts();
   const { data: cards } = useCards();
+  const { data: goals } = useGoals();
   const { transactions, isLoading: activityLoading } = useRecentActivity(accounts);
   const primaryCard = cards?.[0];
+  const topGoal = goals?.[0];
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -115,6 +118,23 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-6">
+              {topGoal && (
+                <section className="space-y-3">
+                  <div className="flex items-baseline justify-between">
+                    <h2 className="eyebrow">Savings goal</h2>
+                    <Link
+                      href="/savings"
+                      className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                      View all
+                    </Link>
+                  </div>
+                  <div className="rounded-xl border bg-card p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                    <GoalRing goal={topGoal} size={112} />
+                  </div>
+                </section>
+              )}
+
               <section className="space-y-3">
                 <div className="flex items-baseline justify-between">
                   <h2 className="eyebrow">Recent activity</h2>

@@ -87,6 +87,10 @@ deposit  "$CHECKING"              "39.90" "Refund — Uniqlo"
 echo "→ Issuing a debit card on checking…"
 curl -fsS "${auth[@]}" -X POST "$BASE_URL/api/accounts/$CHECKING/cards" >/dev/null
 
+echo "→ Setting a savings goal…"
+curl -fsS "${auth[@]}" -X POST "$BASE_URL/api/accounts/$SAVINGS/goal" \
+  -d '{"name":"3-month cushion","target":"1000.00"}' >/dev/null
+
 # Backdate the demo history (timestamps only) so the balance trend looks alive.
 if [[ "${BACKDATE:-1}" == "1" ]] && command -v docker >/dev/null \
    && docker ps --format '{{.Names}}' | grep -q "^${PG_CONTAINER}$"; then

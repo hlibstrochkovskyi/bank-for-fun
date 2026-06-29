@@ -41,6 +41,7 @@ const PROTECTED_PREFIXES = [
   "/transfers",
   "/transactions",
   "/cards",
+  "/savings",
   "/statements",
   "/held-transfers",
   "/admin",

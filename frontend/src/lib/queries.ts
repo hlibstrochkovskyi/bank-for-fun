@@ -14,6 +14,7 @@ import {
   accountSchema,
   adminHeldTransferSchema,
   cardSchema,
+  goalSchema,
   heldTransferSchema,
   paymentResultSchema,
   statementSchema,
@@ -101,6 +102,25 @@ export function useIssueCard() {
     mutationFn: (accountId: string) =>
       api.post(`accounts/${accountId}/cards`, cardSchema, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cards"] }),
+  });
+}
+
+export function useGoals() {
+  return useQuery({
+    queryKey: ["goals"],
+    queryFn: () => api.get("goals", z.array(goalSchema)),
+  });
+}
+
+export function useSetGoal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { accountId: string; name: string; target: string }) =>
+      api.post(`accounts/${input.accountId}/goal`, goalSchema, {
+        name: input.name,
+        target: input.target,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["goals"] }),
   });
 }
 
