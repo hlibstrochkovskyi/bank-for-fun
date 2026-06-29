@@ -3,6 +3,7 @@ package com.ledgerbank.web;
 import com.ledgerbank.accounts.Account;
 import com.ledgerbank.accounts.AccountService;
 import com.ledgerbank.accounts.AccountType;
+import com.ledgerbank.enrichment.EnrichmentService;
 import com.ledgerbank.ledger.LedgerService;
 import com.ledgerbank.payments.DepositCommand;
 import com.ledgerbank.payments.PaymentResult;
@@ -39,13 +40,15 @@ public class AccountController {
 	private final LedgerService ledger;
 	private final PaymentsService payments;
 	private final StatementsService statements;
+	private final EnrichmentService enrichment;
 
 	public AccountController(AccountService accounts, LedgerService ledger, PaymentsService payments,
-			StatementsService statements) {
+			StatementsService statements, EnrichmentService enrichment) {
 		this.accounts = accounts;
 		this.ledger = ledger;
 		this.payments = payments;
 		this.statements = statements;
+		this.enrichment = enrichment;
 	}
 
 	@PostMapping
@@ -75,7 +78,7 @@ public class AccountController {
 	public List<TransactionResponse> transactions(@PathVariable UUID accountId,
 			@RequestParam(defaultValue = "50") int limit, @AuthenticationPrincipal Jwt jwt) {
 		accounts.requireOwnedBy(accountId, Principals.userId(jwt));
-		return ledger.history(accountId, limit).stream().map(TransactionResponse::from).toList();
+		return TransactionResponse.list(ledger.history(accountId, limit), enrichment);
 	}
 
 	@GetMapping("/{accountId}/statement")
@@ -87,7 +90,7 @@ public class AccountController {
 		// 'from' and 'to' are inclusive calendar days (UTC); the period is [from 00:00, to+1 00:00).
 		var fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
 		var toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
-		return StatementResponse.from(statements.statement(accountId, fromInclusive, toExclusive));
+		return StatementResponse.from(statements.statement(accountId, fromInclusive, toExclusive), enrichment);
 	}
 
 	@RateLimited("money")
