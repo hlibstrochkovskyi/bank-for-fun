@@ -7,6 +7,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -34,15 +35,41 @@ public class AccountService {
 	/** Open a customer account with no overdraft (floor of 0). */
 	@Transactional
 	public Account openCustomerAccount(UUID ownerId, AccountType type, Currency currency) {
+		return openCustomerAccount(ownerId, type, currency, null);
+	}
+
+	/** Open a customer account with an optional human nickname (no overdraft, floor of 0). */
+	@Transactional
+	public Account openCustomerAccount(UUID ownerId, AccountType type, Currency currency, String nickname) {
 		Objects.requireNonNull(ownerId, "ownerId must not be null");
 		if (type.isSystem()) {
 			throw new IllegalArgumentException("system account type not allowed for a customer: " + type);
 		}
-		Account account = accounts.save(new Account(ownerId, type, currency));
+		String clean = (nickname == null || nickname.isBlank()) ? defaultNickname(type) : nickname.trim();
+		Account account = accounts.save(new Account(ownerId, type, currency, clean, generateAccountNumber()));
 		ledger.openBalance(account.id(), currency, 0L);
 		events.publishEvent(new AccountOpenedEvent(account.id(), ownerId, type.name(),
 				currency.getCurrencyCode()));
 		return account;
+	}
+
+	private static String defaultNickname(AccountType type) {
+		return switch (type) {
+			case CHECKING -> "Everyday Checking";
+			case SAVINGS -> "Savings";
+			default -> type.name();
+		};
+	}
+
+	/** A 10-digit display account number, retried on the (astronomically rare) collision. */
+	private String generateAccountNumber() {
+		for (int attempt = 0; attempt < 5; attempt++) {
+			String candidate = String.format("%010d", ThreadLocalRandom.current().nextLong(1_000_000_000L, 10_000_000_000L));
+			if (!accounts.existsByAccountNumber(candidate)) {
+				return candidate;
+			}
+		}
+		throw new IllegalStateException("could not allocate a unique account number");
 	}
 
 	/** Open a system account (no owner, unbounded — may go negative). */

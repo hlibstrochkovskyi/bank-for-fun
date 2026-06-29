@@ -9,5 +9,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
 	List<Account> findByOwnerId(UUID ownerId);
 
+	boolean existsByAccountNumber(String accountNumber);
+
 	Optional<Account> findFirstByTypeAndCurrencyOrderByCreatedAt(AccountType type, String currency);
 }

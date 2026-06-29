@@ -53,7 +53,7 @@ public class AccountController {
 			@AuthenticationPrincipal Jwt jwt) {
 		AccountType type = AccountType.valueOf(request.type().trim().toUpperCase());
 		Account account = accounts.openCustomerAccount(Principals.userId(jwt), type,
-				Currency.getInstance(request.currency().trim().toUpperCase()));
+				Currency.getInstance(request.currency().trim().toUpperCase()), request.nickname());
 		AccountResponse body = AccountResponse.of(account, ledger.balanceOf(account.id()));
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}

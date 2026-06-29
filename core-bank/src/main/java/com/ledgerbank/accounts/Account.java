@@ -30,6 +30,11 @@ public class Account {
 	@Enumerated(EnumType.STRING)
 	private AccountType type;
 
+	private String nickname;
+
+	@Column(name = "account_number")
+	private String accountNumber;
+
 	private String currency;
 
 	@Enumerated(EnumType.STRING)
@@ -44,8 +49,14 @@ public class Account {
 	}
 
 	public Account(UUID ownerId, AccountType type, Currency currency) {
+		this(ownerId, type, currency, null, null);
+	}
+
+	public Account(UUID ownerId, AccountType type, Currency currency, String nickname, String accountNumber) {
 		this.ownerId = ownerId;
 		this.type = type;
+		this.nickname = nickname;
+		this.accountNumber = accountNumber;
 		this.currency = currency.getCurrencyCode();
 		this.status = AccountStatus.ACTIVE;
 	}
@@ -60,6 +71,14 @@ public class Account {
 
 	public AccountType type() {
 		return type;
+	}
+
+	public String nickname() {
+		return nickname;
+	}
+
+	public String accountNumber() {
+		return accountNumber;
 	}
 
 	public Currency currency() {
