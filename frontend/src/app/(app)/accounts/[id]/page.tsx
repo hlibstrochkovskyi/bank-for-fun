@@ -4,26 +4,28 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAccount, useTransactions } from "@/lib/queries";
-import { accountMeta } from "@/lib/labels";
-import { formatMoney } from "@/lib/format";
+import { accountMeta, accountName } from "@/lib/labels";
+import { formatMoney, maskAccountNumber } from "@/lib/format";
 import { AccountMoneyDialog } from "@/components/account/account-money-dialog";
 import { StatementView } from "@/components/account/statement-view";
 import { TransactionRow } from "@/components/money/transaction-row";
+import { ErrorState } from "@/components/app/state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AccountDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { data: account, isLoading } = useAccount(id);
-  const { data: txns, isLoading: txLoading } = useTransactions(id, 100);
+  const { data: account, isLoading, error } = useAccount(id);
+  const { data: txns, isLoading: txLoading, error: txError } = useTransactions(id, 100);
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
-  if (!account)
+  if (error || !account)
     return (
-      <p className="text-sm text-muted-foreground">
-        This account couldn’t be found.
-      </p>
+      <ErrorState
+        title="Account unavailable"
+        message="This account couldn’t be found, or you don’t have access to it."
+      />
     );
 
   const { label, Icon } = accountMeta(account.type);
@@ -44,13 +46,17 @@ export default function AccountDetailPage() {
             <Icon className="size-6" aria-hidden />
           </span>
           <div>
-            <p className="eyebrow">
-              {label} · {account.currency}
+            <p className="text-lg font-medium">{accountName(account)}</p>
+            <p className="text-xs text-muted-foreground">
+              {label}
+              {account.accountNumber && (
+                <span className="font-mono"> · {maskAccountNumber(account.accountNumber)}</span>
+              )}
+              <span className="font-mono"> · {account.currency}</span>
             </p>
-            <p className="mt-1.5 font-display text-4xl tracking-tight tabular-nums">
+            <p className="mt-2 font-display text-4xl tracking-tight tabular-nums">
               {formatMoney(account.balance)}
             </p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{account.id}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -71,6 +77,10 @@ export default function AccountDetailPage() {
               <div className="py-8">
                 <Skeleton className="h-5 w-full" />
               </div>
+            ) : txError ? (
+              <p className="py-10 text-center text-sm text-destructive">
+                Couldn’t load activity. Please try again.
+              </p>
             ) : !txns?.length ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 No transactions yet.

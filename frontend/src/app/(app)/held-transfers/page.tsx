@@ -4,6 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { useHeldTransfers } from "@/lib/queries";
 import { formatMoney, formatDateTime, humanize } from "@/lib/format";
 import type { HeldTransfer } from "@/lib/schemas";
+import { ErrorState } from "@/components/app/state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ const STATUS_COPY: Record<string, string> = {
 };
 
 export default function HeldTransfersPage() {
-  const { data, isLoading } = useHeldTransfers();
+  const { data, isLoading, error } = useHeldTransfers();
 
   return (
     <div className="space-y-6">
@@ -38,6 +39,8 @@ export default function HeldTransfersPage() {
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
         </div>
+      ) : error ? (
+        <ErrorState title="Couldn’t load held transfers" message={error.message} />
       ) : !data?.length ? (
         <EmptyHeld />
       ) : (

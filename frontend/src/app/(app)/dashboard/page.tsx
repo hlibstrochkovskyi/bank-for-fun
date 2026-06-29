@@ -15,13 +15,14 @@ import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { AccountCard } from "@/components/dashboard/account-card";
 import { OpenAccountDialog } from "@/components/dashboard/open-account-dialog";
 import { TransactionRow } from "@/components/money/transaction-row";
+import { ErrorState } from "@/components/app/state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { data: accounts, isLoading } = useAccounts();
+  const { data: accounts, isLoading, error } = useAccounts();
   const { data: cards } = useCards();
   const { data: goals } = useGoals();
   const { transactions, isLoading: activityLoading } = useRecentActivity(accounts);
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const topGoal = goals?.[0];
 
   if (isLoading) return <DashboardSkeleton />;
+  if (error) return <ErrorState title="Couldn’t load your accounts" message={error.message} />;
 
   const hasAccounts = (accounts?.length ?? 0) > 0;
   const currency = accounts?.[0]?.currency ?? "USD";

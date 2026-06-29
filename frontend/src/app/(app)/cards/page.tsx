@@ -4,10 +4,11 @@ import { CreditCard } from "lucide-react";
 import { useCards } from "@/lib/queries";
 import { CardVisual } from "@/components/cards/card-visual";
 import { IssueCardDialog } from "@/components/cards/issue-card-dialog";
+import { ErrorState } from "@/components/app/state";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CardsPage() {
-  const { data: cards, isLoading } = useCards();
+  const { data: cards, isLoading, error } = useCards();
   const hasCards = (cards?.length ?? 0) > 0;
 
   return (
@@ -28,6 +29,8 @@ export default function CardsPage() {
           <Skeleton className="aspect-[1.586/1] rounded-2xl" />
           <Skeleton className="aspect-[1.586/1] rounded-2xl" />
         </div>
+      ) : error ? (
+        <ErrorState title="Couldn’t load your cards" message={error.message} />
       ) : !hasCards ? (
         <EmptyCards />
       ) : (

@@ -4,10 +4,11 @@ import { Target } from "lucide-react";
 import { useGoals } from "@/lib/queries";
 import { GoalRing } from "@/components/goals/goal-ring";
 import { SetGoalDialog } from "@/components/goals/set-goal-dialog";
+import { ErrorState } from "@/components/app/state";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SavingsPage() {
-  const { data: goals, isLoading } = useGoals();
+  const { data: goals, isLoading, error } = useGoals();
   const hasGoals = (goals?.length ?? 0) > 0;
 
   return (
@@ -28,6 +29,8 @@ export default function SavingsPage() {
           <Skeleton className="h-40 rounded-xl" />
           <Skeleton className="h-40 rounded-xl" />
         </div>
+      ) : error ? (
+        <ErrorState title="Couldn’t load your goals" message={error.message} />
       ) : !hasGoals ? (
         <EmptyGoals />
       ) : (

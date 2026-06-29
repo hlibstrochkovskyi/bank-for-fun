@@ -2,10 +2,11 @@
 
 import { useAccounts, useRecentActivity } from "@/lib/queries";
 import { TransactionRow } from "@/components/money/transaction-row";
+import { ErrorState } from "@/components/app/state";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TransactionsPage() {
-  const { data: accounts, isLoading } = useAccounts();
+  const { data: accounts, isLoading, error } = useAccounts();
   const { transactions, isLoading: activityLoading } = useRecentActivity(accounts, 100);
 
   return (
@@ -18,6 +19,9 @@ export default function TransactionsPage() {
         </p>
       </header>
 
+      {error ? (
+        <ErrorState title="Couldn’t load transactions" message={error.message} />
+      ) : (
       <div className="rounded-xl border bg-card px-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
         {isLoading || activityLoading ? (
           <ListSkeleton />
@@ -31,6 +35,7 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
