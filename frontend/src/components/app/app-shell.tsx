@@ -55,7 +55,7 @@ export function AppShell({
       {/* Desktop: fixed forest-green sidebar. */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex h-16 items-center px-6">
-          <Link href="/dashboard" aria-label="Ledger home" className="text-sidebar-foreground">
+          <Link href="/dashboard" aria-label="Funny Bank home" className="text-sidebar-foreground">
             <Logo />
           </Link>
         </div>
@@ -85,7 +85,7 @@ export function AppShell({
       {/* Mobile: forest-green top bar. */}
       <header className="sticky top-0 z-40 border-b border-sidebar-border bg-sidebar text-sidebar-foreground lg:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/dashboard" aria-label="Ledger home" className="text-sidebar-foreground">
+          <Link href="/dashboard" aria-label="Funny Bank home" className="text-sidebar-foreground">
             <Logo />
           </Link>
           <UserMenu name={user.name} email={user.email} />

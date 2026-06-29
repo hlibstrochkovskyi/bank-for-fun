@@ -18,7 +18,7 @@ export function CardVisual({ card, className }: { card: Card; className?: string
       <div className="pointer-events-none absolute -right-8 -top-10 size-40 rounded-full bg-white/5 blur-2xl" />
 
       <div className="flex items-start justify-between">
-        <span className="font-display text-lg tracking-tight">Ledger</span>
+        <span className="font-display text-lg tracking-tight">Funny Bank</span>
         <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white/60">
           {frozen ? card.status : "Debit"}
         </span>

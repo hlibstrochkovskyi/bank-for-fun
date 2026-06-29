@@ -86,7 +86,7 @@ export default function Home() {
       <footer className="mx-auto w-full max-w-6xl px-6 py-8">
         <div className="ledger-rule mb-6" />
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <Logo showWordmark={false} />
+          <Logo />
           <span>A learning &amp; portfolio project — not a real bank.</span>
         </div>
       </footer>

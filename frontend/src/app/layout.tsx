@@ -24,7 +24,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Ledger — a bank that balances",
+  title: "Funny Bank",
   description:
     "A simulated retail bank on an immutable double-entry ledger.",
 };
