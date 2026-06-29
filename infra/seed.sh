@@ -84,6 +84,9 @@ withdraw "$CHECKING"               "6.50" "Blue Bottle Coffee"
 withdraw "$CHECKING"               "2.75" "Metro Transit"
 deposit  "$CHECKING"              "39.90" "Refund — Uniqlo"
 
+echo "→ Issuing a debit card on checking…"
+curl -fsS "${auth[@]}" -X POST "$BASE_URL/api/accounts/$CHECKING/cards" >/dev/null
+
 # Backdate the demo history (timestamps only) so the balance trend looks alive.
 if [[ "${BACKDATE:-1}" == "1" ]] && command -v docker >/dev/null \
    && docker ps --format '{{.Names}}' | grep -q "^${PG_CONTAINER}$"; then
