@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Receipt, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, CreditCard, Receipt, ShieldAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { UserMenu } from "./user-menu";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const nav: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: Receipt },
+  { href: "/cards", label: "Cards", icon: CreditCard },
   { href: "/transfers", label: "Transfer", icon: ArrowLeftRight },
   { href: "/held-transfers", label: "Held", icon: ShieldAlert },
 ];

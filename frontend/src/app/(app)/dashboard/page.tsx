@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ArrowLeftRight, Sparkles, Wallet } from "lucide-react";
-import { useAccounts, useRecentActivity } from "@/lib/queries";
+import { useAccounts, useCards, useRecentActivity } from "@/lib/queries";
 import { spendingByCategory } from "@/lib/insights";
 import { formatMoney } from "@/lib/format";
 import { categoryLabel } from "@/lib/labels";
 import { HeroBalance } from "@/components/dashboard/hero-balance";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { CardVisual } from "@/components/cards/card-visual";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { AccountCard } from "@/components/dashboard/account-card";
 import { OpenAccountDialog } from "@/components/dashboard/open-account-dialog";
@@ -20,7 +21,9 @@ import { cn } from "@/lib/utils";
 export default function DashboardPage() {
   const { data: session } = useSession();
   const { data: accounts, isLoading } = useAccounts();
+  const { data: cards } = useCards();
   const { transactions, isLoading: activityLoading } = useRecentActivity(accounts);
+  const primaryCard = cards?.[0];
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -74,9 +77,12 @@ export default function DashboardPage() {
                 activityLoading={activityLoading}
               />
             </div>
-            <aside className="space-y-3">
-              <h2 className="eyebrow">Quick actions</h2>
-              <QuickActions primaryAccountId={primaryAccountId} />
+            <aside className="space-y-4">
+              {primaryCard && <CardVisual card={primaryCard} />}
+              <div className="space-y-3">
+                <h2 className="eyebrow">Quick actions</h2>
+                <QuickActions primaryAccountId={primaryAccountId} />
+              </div>
             </aside>
           </div>
 

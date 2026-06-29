@@ -30,6 +30,19 @@ export const transactionSchema = z.object({
 });
 export type Transaction = z.infer<typeof transactionSchema>;
 
+export const cardSchema = z.object({
+  id: z.string(),
+  accountId: z.string(),
+  accountNickname: z.string().nullable().optional(),
+  cardholder: z.string(),
+  network: z.string(),
+  last4: z.string(),
+  expMonth: z.number(),
+  expYear: z.number(),
+  status: z.string(),
+});
+export type Card = z.infer<typeof cardSchema>;
+
 export const heldTransferSchema = z.object({
   id: z.string(),
   fromAccountId: z.string(),

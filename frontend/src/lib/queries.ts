@@ -12,6 +12,7 @@ import {
   type Account,
   type Transaction,
   accountSchema,
+  cardSchema,
   heldTransferSchema,
   paymentResultSchema,
   statementSchema,
@@ -83,6 +84,22 @@ export function useStatement(
     queryFn: () =>
       api.get(`accounts/${accountId}/statement?from=${from}&to=${to}`, statementSchema),
     enabled: Boolean(accountId && from && to),
+  });
+}
+
+export function useCards() {
+  return useQuery({
+    queryKey: ["cards"],
+    queryFn: () => api.get("cards", z.array(cardSchema)),
+  });
+}
+
+export function useIssueCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (accountId: string) =>
+      api.post(`accounts/${accountId}/cards`, cardSchema, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cards"] }),
   });
 }
 
