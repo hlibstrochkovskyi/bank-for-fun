@@ -24,6 +24,8 @@ export const transactionSchema = z.object({
   type: z.string(),
   amount: moneySchema,
   description: z.string().nullable(),
+  merchant: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 export type Transaction = z.infer<typeof transactionSchema>;

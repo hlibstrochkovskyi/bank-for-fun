@@ -25,6 +25,19 @@ export function accountMeta(type: string): { label: string; Icon: LucideIcon } {
   }
 }
 
+/** Human label for a derived spending category, e.g. "GROCERIES" -> "Groceries". */
+export function categoryLabel(category?: string | null): string | null {
+  if (!category || category === "UNCATEGORIZED") return null;
+  const lower = category.replace(/_/g, " ").toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/** First letter for a merchant avatar tile. */
+export function merchantInitial(merchant?: string | null): string {
+  const m = merchant?.trim();
+  return m ? m.charAt(0).toUpperCase() : "•";
+}
+
 export function transactionMeta(type: string): { label: string; Icon: LucideIcon } {
   switch (type) {
     case "DEPOSIT":

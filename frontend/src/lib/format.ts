@@ -29,6 +29,17 @@ export function formatDate(iso: string): string {
   });
 }
 
+/** Relative day label for transaction rows: "Today" / "Yesterday" / "Jun 1". */
+export function formatRelativeDate(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(today) - startOfDay(d)) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("en-US", {
     month: "short",
