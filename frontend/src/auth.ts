@@ -25,6 +25,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessToken: refreshed.access_token,
       expiresAt: Math.floor(Date.now() / 1000) + refreshed.expires_in,
       refreshToken: refreshed.refresh_token ?? token.refreshToken,
+      // Keep the id_token fresh too — it's the hint we use for RP-initiated logout.
+      idToken: refreshed.id_token ?? token.idToken,
       error: undefined,
     };
   } catch {
@@ -85,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ...token,
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
+          idToken: account.id_token,
           expiresAt: account.expires_at,
           name: (profile?.name as string) ?? token.name,
           email: (profile?.email as string) ?? token.email,
@@ -102,6 +105,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.error = token.error;
       session.roles = token.roles ?? [];
       return session;
+    },
+  },
+  events: {
+    // RP-initiated logout: clearing our cookie isn't enough — Keycloak still holds
+    // an SSO session, so the next sign-in would silently re-authenticate the same
+    // user with no prompt. End the Keycloak session too, using the id_token as the
+    // hint (it carries the session id, so this works even server-side).
+    async signOut(message) {
+      const idToken = "token" in message ? message.token?.idToken : undefined;
+      if (!idToken) return;
+      try {
+        const url = new URL(
+          `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
+        );
+        url.searchParams.set("id_token_hint", idToken);
+        url.searchParams.set("client_id", process.env.KEYCLOAK_CLIENT_ID!);
+        await fetch(url, { method: "GET" });
+      } catch {
+        // Best-effort: if the IdP is unreachable, the local session is still cleared.
+      }
     },
   },
 });
