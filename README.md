@@ -1,4 +1,4 @@
-# ledger-bank ("Funny Bank")
+# Funny Bank
 
 A simulated retail bank built on a proper double-entry ledger. It has accounts,
 deposits, transfers, withdrawals, statements, a debit-card model, savings goals,
@@ -363,7 +363,7 @@ three ways:
 ## Repository layout
 
 ```
-ledger-bank/
+funny-bank/
 ├── core-bank/            Java / Spring Boot modular monolith
 │   └── src/main/java/com/ledgerbank/
 │       ├── shared/       Money + cross-module events
